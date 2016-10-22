@@ -56,7 +56,7 @@ func (host *Host) SendRemoteAndRun(script *Script) (err error) {
 	}
 
 	// do the actual work
-	err = host.Ssh(
+	err_job := host.Ssh(
 		"cd", tmpdir, ";",
 		"env",
 		fmt.Sprintf("HOSTNAME=%s", host.Name),
@@ -67,7 +67,7 @@ func (host *Host) SendRemoteAndRun(script *Script) (err error) {
 	if err = host.Ssh("rm", "-r", tmpdir); err != nil {
 		return err
 	}
-	return
+	return err_job
 }
 
 func (host *Host) RunRemote(command *Command) (err error) {
