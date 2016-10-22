@@ -72,3 +72,17 @@ func TestReadGroups(t *testing.T) {
 		}
 	}
 }
+
+func TestReadGroupsComments(t *testing.T) {
+	r := strings.NewReader(`# a comment
+test1 # another comment
+test2 garbage
+# test3
+`)
+	expect := map[string]bool{"test1": true, "test2": true}
+	for _, name := range readGroups(r) {
+		if !expect[name] {
+			t.Error("unexpected:", name)
+		}
+	}
+}

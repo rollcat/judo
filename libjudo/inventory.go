@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"regexp"
 	"sync"
 	"time"
 )
@@ -51,8 +52,14 @@ func isExecutable(mode os.FileMode) bool {
 
 func readGroups(r io.Reader) (out []string) {
 	scanner := bufio.NewScanner(r)
+	re := regexp.MustCompile("^[^# ]+")
 	for scanner.Scan() {
-		out = append(out, scanner.Text())
+		line := scanner.Text()
+		host := re.FindString(line)
+		if host == "" {
+			continue
+		}
+		out = append(out, host)
 	}
 	assert(scanner.Err())
 	return
