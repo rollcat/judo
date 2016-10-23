@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	// "strconv"
 
-	"judo/libjudo"
+	"github.com/rollcat/judo/libjudo"
 
 	getopt "github.com/timtadh/getopt"
 )
