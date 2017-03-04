@@ -2,15 +2,9 @@ package libjudo
 
 import (
 	"fmt"
+	"os"
 	"time"
 )
-
-type TimeoutError struct {
-}
-
-func (e TimeoutError) Error() string {
-	return "Operation timed out"
-}
 
 func (host *Host) pushFiles(job *Job,
 	fname_local string, fname_remote string) (err error) {
@@ -30,6 +24,9 @@ func (host *Host) pushFiles(job *Job,
 			return err
 		case <-time.After(job.Timeout):
 			return TimeoutError{}
+		case <-host.cancel:
+			proc.Signal(os.Interrupt)
+			return CancelError{}
 		}
 	}
 }
@@ -54,6 +51,9 @@ func (host *Host) Ssh(job *Job,
 			return err
 		case <-time.After(job.Timeout):
 			return TimeoutError{}
+		case <-host.cancel:
+			proc.Signal(os.Interrupt)
+			return CancelError{}
 		}
 	}
 }
@@ -78,6 +78,9 @@ func (host *Host) SshRead(job *Job,
 			return
 		case <-time.After(job.Timeout):
 			return "", TimeoutError{}
+		case <-host.cancel:
+			proc.Signal(os.Interrupt)
+			return "", CancelError{}
 		}
 	}
 }

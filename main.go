@@ -74,6 +74,7 @@ func ParseArgs(args []string) (
 
 func main() {
 	job, msg, status, err := ParseArgs(os.Args[1:])
+	job.InstallSignalHandlers()
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(111)

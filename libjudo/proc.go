@@ -3,6 +3,7 @@ package libjudo
 import (
 	"bufio"
 	"io"
+	"os"
 	"os/exec"
 )
 
@@ -77,4 +78,8 @@ func GetOutputLines(name string, args ...string) (ch chan string, err error) {
 		}
 	}()
 	return ch, nil
+}
+
+func (proc Proc) Signal(sig os.Signal) error {
+	return proc.cmd.Process.Signal(sig)
 }

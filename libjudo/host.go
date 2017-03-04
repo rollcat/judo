@@ -9,14 +9,15 @@ import (
 type Host struct {
 	Name   string
 	groups []string
+	cancel chan bool
 }
 
 func NewHost(name string) (host *Host) {
-	return &Host{Name: name, groups: []string{}}
-}
-
-func NewHostGroups(name string, groups []string) (host *Host) {
-	return &Host{Name: name, groups: groups}
+	return &Host{
+		Name:   name,
+		groups: []string{},
+		cancel: make(chan bool),
+	}
 }
 
 func (host Host) Log(msg string) {
@@ -73,4 +74,8 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 
 func (host *Host) RunRemote(job *Job) (err error) {
 	return host.Ssh(job, job.Command.cmd)
+}
+
+func (host *Host) Cancel() {
+	host.cancel <- true
 }

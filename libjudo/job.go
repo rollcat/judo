@@ -2,6 +2,7 @@ package libjudo
 
 import (
 	"os"
+	"os/signal"
 	"path"
 	"time"
 )
@@ -23,6 +24,7 @@ type Job struct {
 	*Script
 	*Command
 	Timeout time.Duration
+	signals chan os.Signal
 }
 
 // Holds the result of executing a Job
@@ -79,12 +81,27 @@ func (script *Script) IsDirMode() bool {
 
 func NewJob(inventory *Inventory, script *Script, command *Command,
 	timeout uint64) (job *Job) {
+	// https://golang.org/pkg/os/signal/#Notify
+	signals := make(chan os.Signal, 1)
 	return &Job{
 		Inventory: inventory,
 		Command:   command,
 		Script:    script,
 		Timeout:   time.Duration(timeout) * time.Second,
+		signals:   signals,
 	}
+}
+
+func (job Job) InstallSignalHandlers() {
+	signal.Notify(job.signals, os.Interrupt)
+	go func() {
+		// wait for SIGINT
+		<-job.signals
+		// let everyone know we're cancelling the operation
+		for host := range job.GetHosts() {
+			host.Cancel()
+		}
+	}()
 }
 
 func (job Job) Log(msg string) {
