@@ -3,6 +3,7 @@ package libjudo
 import (
 	"os"
 	"path"
+	"time"
 )
 
 // file/directory to be sent to the remote Host for execution
@@ -21,6 +22,7 @@ type Job struct {
 	*Inventory
 	*Script
 	*Command
+	Timeout time.Duration
 }
 
 // Holds the result of executing a Job
@@ -75,11 +77,13 @@ func (script *Script) IsDirMode() bool {
 	return script.dirmode
 }
 
-func NewJob(inventory *Inventory, script *Script, command *Command) (job *Job) {
+func NewJob(inventory *Inventory, script *Script, command *Command,
+	timeout uint64) (job *Job) {
 	return &Job{
 		Inventory: inventory,
 		Command:   command,
 		Script:    script,
+		Timeout:   time.Duration(timeout) * time.Second,
 	}
 }
 
@@ -108,9 +112,9 @@ func (job *Job) Execute() *JobResult {
 		go func(host *Host, ch chan error) {
 			var err error
 			if job.Script != nil {
-				err = host.SendRemoteAndRun(job.Script)
+				err = host.SendRemoteAndRun(job)
 			} else if job.Command != nil {
-				err = host.RunRemote(job.Command)
+				err = host.RunRemote(job)
 			} else {
 				panic("Should not happen")
 			}

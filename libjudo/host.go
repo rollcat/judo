@@ -23,9 +23,9 @@ func (host Host) Log(msg string) {
 	logger.Printf("%s: %s\n", host.Name, msg)
 }
 
-func (host *Host) SendRemoteAndRun(script *Script) (err error) {
+func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 	// make cozy
-	tmpdir, err := host.SshRead("mktemp", "-d")
+	tmpdir, err := host.SshRead(job, "mktemp", "-d")
 	if err != nil {
 		return err
 	}
@@ -34,29 +34,30 @@ func (host *Host) SendRemoteAndRun(script *Script) (err error) {
 	defer func() {
 		if err := recover(); err != nil {
 			// oops! clean up remote
-			assert(host.Ssh("rm", "-r", tmpdir))
+			assert(host.Ssh(job, "rm", "-r", tmpdir))
 			// continue panicking
 			panic(err)
 		}
 	}()
 
 	// push files to remote
-	host.pushFiles(script.fname, tmpdir)
+	host.pushFiles(job, job.Script.fname, tmpdir)
 
 	// are we in dirmode?
 	var remote_command string
-	if !script.dirmode {
-		remote_command = path.Join(tmpdir, path.Base(script.fname))
+	if !job.Script.dirmode {
+		remote_command = path.Join(tmpdir, path.Base(job.Script.fname))
 	} else {
 		remote_command = path.Join(
 			tmpdir,
-			path.Base(script.fname),
+			path.Base(job.Script.fname),
 			"script",
 		)
 	}
 
 	// do the actual work
 	err_job := host.Ssh(
+		job,
 		"cd", tmpdir, ";",
 		"env",
 		fmt.Sprintf("HOSTNAME=%s", host.Name),
@@ -64,12 +65,12 @@ func (host *Host) SendRemoteAndRun(script *Script) (err error) {
 	)
 
 	// clean up
-	if err = host.Ssh("rm", "-r", tmpdir); err != nil {
+	if err = host.Ssh(job, "rm", "-r", tmpdir); err != nil {
 		return err
 	}
 	return err_job
 }
 
-func (host *Host) RunRemote(command *Command) (err error) {
-	return host.Ssh(command.cmd)
+func (host *Host) RunRemote(job *Job) (err error) {
+	return host.Ssh(job, job.Command.cmd)
 }

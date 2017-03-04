@@ -12,7 +12,8 @@ func (e TimeoutError) Error() string {
 	return "Operation timed out"
 }
 
-func (host *Host) pushFiles(fname_local string, fname_remote string) (err error) {
+func (host *Host) pushFiles(job *Job,
+	fname_local string, fname_remote string) (err error) {
 	var remote = fmt.Sprintf("[%s]:%s", host.Name, fname_remote)
 	proc, err := NewProc("scp", "-r", fname_local, remote)
 	if err != nil {
@@ -27,13 +28,14 @@ func (host *Host) pushFiles(fname_local string, fname_remote string) (err error)
 			host.Log(line)
 		case err = <-proc.Done:
 			return err
-		case <-time.After(10 * time.Second):
+		case <-time.After(job.Timeout):
 			return TimeoutError{}
 		}
 	}
 }
 
-func (host *Host) Ssh(command string, args ...string) (err error) {
+func (host *Host) Ssh(job *Job,
+	command string, args ...string) (err error) {
 	proc, err := NewProc(
 		"ssh",
 		append([]string{host.Name, command}, args...)...,
@@ -50,13 +52,14 @@ func (host *Host) Ssh(command string, args ...string) (err error) {
 			host.Log(line)
 		case err = <-proc.Done:
 			return err
-		case <-time.After(20 * time.Second):
+		case <-time.After(job.Timeout):
 			return TimeoutError{}
 		}
 	}
 }
 
-func (host *Host) SshRead(command string, args ...string) (out string, err error) {
+func (host *Host) SshRead(job *Job,
+	command string, args ...string) (out string, err error) {
 	proc, err := NewProc(
 		"ssh",
 		append([]string{host.Name, command}, args...)...,
@@ -73,7 +76,7 @@ func (host *Host) SshRead(command string, args ...string) (out string, err error
 			host.Log(line)
 		case err = <-proc.Done:
 			return
-		case <-time.After(10 * time.Second):
+		case <-time.After(job.Timeout):
 			return "", TimeoutError{}
 		}
 	}

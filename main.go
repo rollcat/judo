@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/rollcat/judo/libjudo"
 
@@ -13,9 +14,11 @@ import (
 var debug_level = 0
 
 const usage = `usage:
-    judo [-d] [-f n] -s script  [--] ssh-targets
-    judo [-d] [-f n] -c command [--] ssh-targets
-    judo [-v | -h]`
+    judo [common flags] -s script  [--] ssh-targets
+    judo [common flags] -c command [--] ssh-targets
+    judo [-v | -h]
+common flags:
+    [-d] [-f n] [-t s]`
 
 const version = "judo 0.1-dev"
 
@@ -23,13 +26,14 @@ func ParseArgs(args []string) (
 	job *libjudo.Job, msg string,
 	status int, err error) {
 
-	args, opts, err := getopt.GetOpt(args, "hvs:c:", nil)
+	args, opts, err := getopt.GetOpt(args, "hvs:c:t:", nil)
 	if err != nil {
 		return nil, usage, 111, err
 	}
 
 	var script *libjudo.Script
 	var command *libjudo.Command
+	var timeout uint64 = 30
 
 	for _, opt := range opts {
 		switch opt.Opt() {
@@ -44,10 +48,15 @@ func ParseArgs(args []string) (
 			}
 		case "-c":
 			command = libjudo.NewCommand(opt.Arg())
+		case "-t":
+			timeout, err = strconv.ParseUint(opt.Arg(), 10, 64)
+			if err != nil {
+				return nil, usage, 111, err
+			}
 			// case "-f":
 			// 	forks, err = strconv.ParseUint(opt.Arg(), 10, 8)
 			// 	if err != nil {
-			// 		return nil, usage, 111, nil
+			// 		return nil, usage, 111, err
 			// 	}
 		}
 	}
@@ -58,7 +67,7 @@ func ParseArgs(args []string) (
 
 	inventory := libjudo.NewInventory(args)
 	inventory.Populate()
-	job = libjudo.NewJob(inventory, script, command)
+	job = libjudo.NewJob(inventory, script, command, timeout)
 
 	return job, "", 0, nil
 }
