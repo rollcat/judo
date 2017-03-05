@@ -2,6 +2,7 @@ package libjudo
 
 import (
 	"fmt"
+	"os"
 	"path"
 )
 
@@ -10,6 +11,7 @@ type Host struct {
 	Name   string
 	groups []string
 	cancel chan bool
+	master *Proc
 }
 
 func NewHost(name string) (host *Host) {
@@ -17,6 +19,7 @@ func NewHost(name string) (host *Host) {
 		Name:   name,
 		groups: []string{},
 		cancel: make(chan bool),
+		master: nil,
 	}
 }
 
@@ -25,6 +28,13 @@ func (host Host) Log(msg string) {
 }
 
 func (host *Host) SendRemoteAndRun(job *Job) (err error) {
+	// speedify!
+	host.StartMaster()
+
+	// deferred functions are called first in, last out.
+	// any other defers can still use the master to clean up remote.
+	defer host.StopMaster()
+
 	// make cozy
 	tmpdir, err := host.SshRead(job, "mktemp", "-d")
 	if err != nil {
@@ -77,5 +87,45 @@ func (host *Host) RunRemote(job *Job) (err error) {
 }
 
 func (host *Host) Cancel() {
-	host.cancel <- true
+	go func() {
+		for {
+			host.cancel <- true
+		}
+	}()
+}
+
+func (host *Host) StartMaster() (err error) {
+	if host.master != nil {
+		panic("there already is a master")
+	}
+	proc, err := NewProc("ssh", "-M", host.Name)
+	if err != nil {
+		return
+	}
+	host.master = proc
+	go func() {
+		close(host.master.Stdin)
+		for {
+			select {
+			case line := <-host.master.Stdout:
+				host.Log(line)
+			case line := <-host.master.Stderr:
+				host.Log(line)
+			case err = <-host.master.Done:
+				host.Log(err.Error())
+				host.master = nil
+			case <-host.cancel:
+				host.StopMaster()
+				host.master = nil
+			}
+		}
+	}()
+	return
+}
+
+func (host *Host) StopMaster() error {
+	if host.master == nil {
+		panic("there was no master to stop")
+	}
+	return host.master.Signal(os.Interrupt)
 }
