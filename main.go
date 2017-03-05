@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/rollcat/judo/libjudo"
 
@@ -66,6 +67,7 @@ func ParseArgs(args []string) (
 	}
 
 	inventory := libjudo.NewInventory()
+	inventory.Timeout = time.Duration(timeout) * time.Second
 	inventory.Populate(args)
 	job = libjudo.NewJob(inventory, script, command, timeout)
 

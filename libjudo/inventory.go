@@ -10,14 +10,16 @@ import (
 )
 
 type Inventory struct {
-	hosts []*Host
-	s     *SeenString
+	hosts   []*Host
+	s       *SeenString
+	Timeout time.Duration
 }
 
 func NewInventory() *Inventory {
 	return &Inventory{
-		hosts: []*Host{},
-		s:     NewSeenString(),
+		hosts:   []*Host{},
+		s:       NewSeenString(),
+		Timeout: time.Duration(30) * time.Second,
 	}
 }
 
@@ -74,7 +76,7 @@ func (inventory *Inventory) readGroupsFromScript(fname string, ch chan *Host) {
 		case err = <-proc.Done:
 			assert(err)
 			return
-		case <-time.After(10 * time.Second):
+		case <-time.After(inventory.Timeout):
 			panic(TimeoutError{})
 		}
 	}
