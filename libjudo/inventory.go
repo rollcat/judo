@@ -59,6 +59,38 @@ func readGroups(r io.Reader) (out []string) {
 	return
 }
 
+func (inventory *Inventory) readGroupsFromScript(fname string, ch chan *Host) {
+	proc, err := NewProc(fname)
+	assert(err)
+	close(proc.Stdin)
+	for {
+		select {
+		case line := <-proc.Stdout:
+			for host := range inventory.resolveNames(line) {
+				ch <- host
+			}
+		case line := <-proc.Stderr:
+			logger.Print(line)
+		case err = <-proc.Done:
+			assert(err)
+			return
+		case <-time.After(10 * time.Second):
+			panic(TimeoutError{})
+		}
+	}
+}
+
+func (inventory *Inventory) readGroupsFromFile(fname string, ch chan *Host) {
+	f, err := os.Open(fname)
+	assert(err)
+	defer f.Close()
+	for _, name_ := range readGroups(f) {
+		for host := range inventory.resolveNames(name_) {
+			ch <- host
+		}
+	}
+}
+
 func (inventory *Inventory) resolveNames(name string) (ch chan *Host) {
 	ch = make(chan *Host)
 	fname := path.Join("groups", name)
@@ -79,37 +111,11 @@ func (inventory *Inventory) resolveNames(name string) (ch chan *Host) {
 		panic("not regular file")
 	}
 	go func() {
-		// var f io.Reader
 		defer close(ch)
 		if isExecutable(stat.Mode()) {
-			proc, err := NewProc(fname)
-			assert(err)
-			close(proc.Stdin)
-			for {
-				select {
-				case line := <-proc.Stdout:
-					for host := range inventory.resolveNames(line) {
-						ch <- host
-					}
-				case line := <-proc.Stderr:
-					logger.Print(line)
-				case err = <-proc.Done:
-					assert(err)
-					return
-				case <-time.After(10 * time.Second):
-					panic(TimeoutError{})
-				}
-			}
-
+			inventory.readGroupsFromScript(fname, ch)
 		} else {
-			f, err := os.Open(fname)
-			assert(err)
-			defer f.Close()
-			for _, name_ := range readGroups(f) {
-				for host := range inventory.resolveNames(name_) {
-					ch <- host
-				}
-			}
+			inventory.readGroupsFromFile(fname, ch)
 		}
 
 	}()
