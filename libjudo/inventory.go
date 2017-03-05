@@ -6,25 +6,21 @@ import (
 	"os"
 	"path"
 	"regexp"
-	"sync"
 	"time"
 )
 
 type Inventory struct {
 	hosts []*Host
 	names []string
-	seen  map[string]bool
-	m     *sync.Mutex
+	s     *SeenString
 }
 
-func NewInventory(names []string) (inventory *Inventory) {
-	inventory = &Inventory{
+func NewInventory(names []string) *Inventory {
+	return &Inventory{
 		hosts: []*Host{},
 		names: names,
-		seen:  make(map[string]bool),
-		m:     &sync.Mutex{},
+		s:     NewSeenString(),
 	}
-	return
 }
 
 func (inventory *Inventory) Populate() {
@@ -65,17 +61,6 @@ func readGroups(r io.Reader) (out []string) {
 	return
 }
 
-func (inventory *Inventory) registerHost(name string) bool {
-	inventory.m.Lock()
-	defer inventory.m.Unlock()
-	if !inventory.seen[name] {
-		inventory.seen[name] = true
-		return false
-	} else {
-		return true
-	}
-}
-
 func (inventory *Inventory) resolveNames(name string) (ch chan *Host) {
 	ch = make(chan *Host)
 	fname := path.Join("groups", name)
@@ -83,7 +68,7 @@ func (inventory *Inventory) resolveNames(name string) (ch chan *Host) {
 
 	if err != nil {
 		go func() {
-			if !inventory.registerHost(name) {
+			if !inventory.s.SeenBefore(name) {
 				ch <- NewHost(name)
 			}
 			close(ch)
