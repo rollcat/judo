@@ -65,8 +65,8 @@ func ParseArgs(args []string) (
 		return nil, usage, 111, nil
 	}
 
-	inventory := libjudo.NewInventory(args)
-	inventory.Populate()
+	inventory := libjudo.NewInventory()
+	inventory.Populate(args)
 	job = libjudo.NewJob(inventory, script, command, timeout)
 
 	return job, "", 0, nil

@@ -6,7 +6,7 @@ import (
 )
 
 func TestInventory_resolveNames(t *testing.T) {
-	inventory := NewInventory([]string{})
+	inventory := NewInventory()
 	for host := range inventory.resolveNames("test") {
 		if host.Name != "test" {
 			t.Error("no host")
@@ -16,8 +16,8 @@ func TestInventory_resolveNames(t *testing.T) {
 }
 
 func TestInventoryPopulate1(t *testing.T) {
-	inventory := NewInventory([]string{"test"})
-	inventory.Populate()
+	inventory := NewInventory()
+	inventory.Populate([]string{"test"})
 	host, ok := <-inventory.GetHosts()
 	if !ok {
 		t.Error("no host")
@@ -30,8 +30,8 @@ func TestInventoryPopulate1(t *testing.T) {
 }
 
 func TestInventoryPopulate2(t *testing.T) {
-	inventory := NewInventory([]string{"test1", "test2"})
-	inventory.Populate()
+	inventory := NewInventory()
+	inventory.Populate([]string{"test1", "test2"})
 
 	seen := make(map[string]bool)
 	for host := range inventory.GetHosts() {
@@ -46,8 +46,8 @@ func TestInventoryPopulate2(t *testing.T) {
 }
 
 func TestExpandHostGroups_NoDuplicates(t *testing.T) {
-	inventory := NewInventory([]string{"test1", "test2", "test1"})
-	inventory.Populate()
+	inventory := NewInventory()
+	inventory.Populate([]string{"test1", "test2", "test1"})
 
 	seen := make(map[string]bool)
 	for host := range inventory.GetHosts() {

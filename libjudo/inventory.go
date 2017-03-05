@@ -11,20 +11,18 @@ import (
 
 type Inventory struct {
 	hosts []*Host
-	names []string
 	s     *SeenString
 }
 
-func NewInventory(names []string) *Inventory {
+func NewInventory() *Inventory {
 	return &Inventory{
 		hosts: []*Host{},
-		names: names,
 		s:     NewSeenString(),
 	}
 }
 
-func (inventory *Inventory) Populate() {
-	for _, name := range inventory.names {
+func (inventory *Inventory) Populate(names []string) {
+	for _, name := range names {
 		for host := range inventory.resolveNames(name) {
 			inventory.hosts = append(inventory.hosts, host)
 		}
