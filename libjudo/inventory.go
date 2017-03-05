@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var inventoryLine = regexp.MustCompile("^[^# ]+")
+
 type Inventory struct {
 	hosts   []*Host
 	s       *SeenString
@@ -48,14 +50,13 @@ func isExecutable(mode os.FileMode) bool {
 
 func readGroups(r io.Reader) (out []string) {
 	scanner := bufio.NewScanner(r)
-	re := regexp.MustCompile("^[^# ]+")
 	for scanner.Scan() {
 		line := scanner.Text()
-		host := re.FindString(line)
-		if host == "" {
+		name := inventoryLine.FindString(line)
+		if name == "" {
 			continue
 		}
-		out = append(out, host)
+		out = append(out, name)
 	}
 	assert(scanner.Err())
 	return
@@ -68,7 +69,12 @@ func (inventory *Inventory) readGroupsFromScript(fname string, ch chan *Host) {
 	for {
 		select {
 		case line := <-proc.Stdout:
-			for host := range inventory.resolveNames(line) {
+			logger.Print(line)
+			name := inventoryLine.FindString(line)
+			if name == "" {
+				continue
+			}
+			for host := range inventory.resolveNames(name) {
 				ch <- host
 			}
 		case line := <-proc.Stderr:
@@ -86,8 +92,8 @@ func (inventory *Inventory) readGroupsFromFile(fname string, ch chan *Host) {
 	f, err := os.Open(fname)
 	assert(err)
 	defer f.Close()
-	for _, name_ := range readGroups(f) {
-		for host := range inventory.resolveNames(name_) {
+	for _, name := range readGroups(f) {
+		for host := range inventory.resolveNames(name) {
 			ch <- host
 		}
 	}
