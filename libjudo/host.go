@@ -105,14 +105,22 @@ func (host *Host) StartMaster() (err error) {
 	host.master = proc
 	go func() {
 		close(host.master.Stdin())
-		for {
+		for host.master != nil {
 			select {
-			case line := <-host.master.Stdout():
+			case line, ok := <-host.master.Stdout():
+				if !ok {
+					continue
+				}
 				host.Log(line)
-			case line := <-host.master.Stderr():
+			case line, ok := <-host.master.Stderr():
+				if !ok {
+					continue
+				}
 				host.Log(line)
 			case err = <-host.master.Done():
-				host.Log(err.Error())
+				if err != nil {
+					host.Log(err.Error())
+				}
 				host.master = nil
 			case <-host.cancel:
 				host.StopMaster()
