@@ -16,9 +16,15 @@ func (host *Host) pushFiles(job *Job,
 	close(proc.Stdin())
 	for {
 		select {
-		case line := <-proc.Stdout():
+		case line, ok := <-proc.Stdout():
+			if !ok {
+				continue
+			}
 			host.Log(line)
-		case line := <-proc.Stderr():
+		case line, ok := <-proc.Stderr():
+			if !ok {
+				continue
+			}
 			host.Log(line)
 		case err = <-proc.Done():
 			return err
@@ -43,9 +49,15 @@ func (host *Host) Ssh(job *Job,
 	close(proc.Stdin())
 	for {
 		select {
-		case line := <-proc.Stdout():
+		case line, ok := <-proc.Stdout():
+			if !ok {
+				continue
+			}
 			host.Log(line)
-		case line := <-proc.Stderr():
+		case line, ok := <-proc.Stderr():
+			if !ok {
+				continue
+			}
 			host.Log(line)
 		case err = <-proc.Done():
 			return err
@@ -70,9 +82,15 @@ func (host *Host) SshRead(job *Job,
 	close(proc.Stdin())
 	for {
 		select {
-		case line := <-proc.Stdout():
+		case line, ok := <-proc.Stdout():
+			if !ok {
+				continue
+			}
 			out = line
-		case line := <-proc.Stderr():
+		case line, ok := <-proc.Stderr():
+			if !ok {
+				continue
+			}
 			host.Log(line)
 		case err = <-proc.Done():
 			return

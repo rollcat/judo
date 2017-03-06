@@ -68,16 +68,18 @@ func (inventory *Inventory) readGroupsFromScript(fname string, ch chan *Host) {
 	close(proc.Stdin())
 	for {
 		select {
-		case line := <-proc.Stdout():
-			logger.Print(line)
+		case line, ok := <-proc.Stdout():
 			name := inventoryLine.FindString(line)
-			if name == "" {
+			if !ok || name == "" {
 				continue
 			}
 			for host := range inventory.resolveNames(name) {
 				ch <- host
 			}
-		case line := <-proc.Stderr():
+		case line, ok := <-proc.Stderr():
+			if !ok {
+				continue
+			}
 			logger.Print(line)
 		case err = <-proc.Done():
 			assert(err)
