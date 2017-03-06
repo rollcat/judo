@@ -24,12 +24,12 @@ common flags:
 const version = "judo 0.1-dev"
 
 func ParseArgs(args []string) (
-	job *libjudo.Job, msg string,
+	job *libjudo.Job, names []string, msg string,
 	status int, err error) {
 
-	args, opts, err := getopt.GetOpt(args, "hvs:c:t:", nil)
+	names, opts, err := getopt.GetOpt(args, "hvs:c:t:", nil)
 	if err != nil {
-		return nil, usage, 111, err
+		return nil, nil, usage, 111, err
 	}
 
 	var script *libjudo.Script
@@ -39,44 +39,42 @@ func ParseArgs(args []string) (
 	for _, opt := range opts {
 		switch opt.Opt() {
 		case "-h":
-			return nil, usage, 0, nil
+			return nil, nil, usage, 0, nil
 		case "-v":
-			return nil, version, 0, nil
+			return nil, nil, version, 0, nil
 		case "-s":
 			script, err = libjudo.NewScript(opt.Arg())
 			if err != nil {
-				return nil, err.Error(), 111, nil
+				return nil, nil, err.Error(), 111, nil
 			}
 		case "-c":
 			command = libjudo.NewCommand(opt.Arg())
 		case "-t":
 			timeout, err = strconv.ParseUint(opt.Arg(), 10, 64)
 			if err != nil {
-				return nil, usage, 111, err
+				return nil, nil, usage, 111, err
 			}
-			// case "-f":
-			// 	forks, err = strconv.ParseUint(opt.Arg(), 10, 8)
-			// 	if err != nil {
-			// 		return nil, usage, 111, err
-			// 	}
+		case "-f":
+			_, err = strconv.ParseUint(opt.Arg(), 10, 8)
+			if err != nil {
+				return nil, nil, usage, 111, err
+			}
 		}
 	}
 
 	if script == nil && command == nil {
-		return nil, usage, 111, nil
+		return nil, nil, usage, 111, nil
 	}
 
 	inventory := libjudo.NewInventory()
 	inventory.Timeout = time.Duration(timeout) * time.Second
-	inventory.Populate(args)
 	job = libjudo.NewJob(inventory, script, command, timeout)
 
-	return job, "", 0, nil
+	return job, names, "", 0, nil
 }
 
 func main() {
-	job, msg, status, err := ParseArgs(os.Args[1:])
-	job.InstallSignalHandlers()
+	job, names, msg, status, err := ParseArgs(os.Args[1:])
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(111)
@@ -88,6 +86,8 @@ func main() {
 	if status != 0 {
 		os.Exit(status)
 	}
+	job.Inventory.Populate(names)
+	job.InstallSignalHandlers()
 	result := job.Execute()
 	successful, failful := result.Report()
 	if failful > 0 {

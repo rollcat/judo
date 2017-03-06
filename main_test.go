@@ -5,7 +5,7 @@ import (
 )
 
 func TestMainParseHelp(t *testing.T) {
-	_, msg, status, err := ParseArgs([]string{})
+	_, _, msg, status, err := ParseArgs([]string{})
 	if err != nil {
 		t.Error("err not nil")
 	}
@@ -16,7 +16,7 @@ func TestMainParseHelp(t *testing.T) {
 		t.Error("no error status")
 	}
 
-	_, msg, status, err = ParseArgs([]string{"-h"})
+	_, _, msg, status, err = ParseArgs([]string{"-h"})
 	if err != nil {
 		t.Error("err not nil")
 	}
@@ -27,7 +27,7 @@ func TestMainParseHelp(t *testing.T) {
 		t.Error("unexpected error status")
 	}
 
-	_, msg, status, err = ParseArgs([]string{"-v"})
+	_, _, msg, status, err = ParseArgs([]string{"-v"})
 	if err != nil {
 		t.Error("err not nil")
 	}
@@ -40,7 +40,7 @@ func TestMainParseHelp(t *testing.T) {
 }
 
 func TestMainParseCommand(t *testing.T) {
-	job, _, _, err := ParseArgs([]string{"-c", "true"})
+	job, _, _, _, err := ParseArgs([]string{"-c", "true"})
 	if job == nil {
 		t.Error("job nil")
 	}
@@ -56,7 +56,7 @@ func TestMainParseCommand(t *testing.T) {
 }
 
 func TestMainParseScriptNotExistent(t *testing.T) {
-	job, msg, _, _ := ParseArgs([]string{"-s", "examples/notfound.sh"})
+	job, _, msg, _, _ := ParseArgs([]string{"-s", "examples/notfound.sh"})
 	if msg == "" {
 		t.Error("no message")
 	}
@@ -66,7 +66,7 @@ func TestMainParseScriptNotExistent(t *testing.T) {
 }
 
 func TestMainParseScript(t *testing.T) {
-	job, _, _, err := ParseArgs([]string{"-s", "examples/hello.sh"})
+	job, _, _, _, err := ParseArgs([]string{"-s", "examples/hello.sh"})
 	if err != nil {
 		t.Error("err not nil")
 	}
@@ -86,7 +86,7 @@ func TestMainParseScript(t *testing.T) {
 }
 
 func TestMainParseScriptDirMode(t *testing.T) {
-	job, _, _, err := ParseArgs([]string{"-s", "examples/bootstrap"})
+	job, _, _, _, err := ParseArgs([]string{"-s", "examples/bootstrap"})
 	if err != nil {
 		t.Error("err not nil")
 	}
