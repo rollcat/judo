@@ -21,7 +21,7 @@ const usage = `usage:
 common flags:
     [-d] [-f n] [-t s]`
 
-const version = "judo 0.1-dev"
+const version = "judo 0.2-dev"
 
 func ParseArgs(args []string) (
 	job *libjudo.Job, names []string, msg string,
