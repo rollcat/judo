@@ -79,17 +79,3 @@ func TestManyHellos(t *testing.T) {
 		}
 	}
 }
-
-func TestEcho(t *testing.T) {
-	ch, err := GetOutputLines("echo", "hello")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	for line := range ch {
-		if line != "hello" {
-			t.Error("unexpected line", line)
-		}
-		return
-	}
-}

@@ -93,28 +93,6 @@ func NewProc(name string, args ...string) (proc *Proc, err error) {
 	return
 }
 
-func GetOutputLines(name string, args ...string) (<-chan string, error) {
-	ch := make(chan string)
-	proc, err := NewProc(name, args...)
-	if err != nil {
-		return nil, err
-	}
-	close(proc.Stdin())
-	go func() {
-		for {
-			select {
-			case line := <-proc.Stdout():
-				ch <- line
-			case <-proc.Stderr():
-			case err := <-proc.Done():
-				close(ch)
-				assert(err)
-			}
-		}
-	}()
-	return ch, nil
-}
-
 func (proc Proc) Signal(sig os.Signal) error {
 	return proc.cmd.Process.Signal(sig)
 }
