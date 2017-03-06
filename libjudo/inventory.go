@@ -65,10 +65,10 @@ func readGroups(r io.Reader) (out []string) {
 func (inventory *Inventory) readGroupsFromScript(fname string, ch chan *Host) {
 	proc, err := NewProc(fname)
 	assert(err)
-	close(proc.Stdin)
+	close(proc.Stdin())
 	for {
 		select {
-		case line := <-proc.Stdout:
+		case line := <-proc.Stdout():
 			logger.Print(line)
 			name := inventoryLine.FindString(line)
 			if name == "" {
@@ -77,9 +77,9 @@ func (inventory *Inventory) readGroupsFromScript(fname string, ch chan *Host) {
 			for host := range inventory.resolveNames(name) {
 				ch <- host
 			}
-		case line := <-proc.Stderr:
+		case line := <-proc.Stderr():
 			logger.Print(line)
-		case err = <-proc.Done:
+		case err = <-proc.Done():
 			assert(err)
 			return
 		case <-time.After(inventory.Timeout):

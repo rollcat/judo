@@ -11,16 +11,16 @@ func TestCat(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	proc.Stdin <- "hello\n"
-	close(proc.Stdin)
+	proc.Stdin() <- "hello\n"
+	close(proc.Stdin())
 	for {
 		select {
-		case line := <-proc.Stdout:
+		case line := <-proc.Stdout():
 			if line != "hello" {
 				t.Error("unexpected line", line)
-				return
 			}
-		case err := <-proc.Done:
+			return
+		case err := <-proc.Done():
 			if err != nil {
 				t.Error(err)
 				return
@@ -42,7 +42,7 @@ func TestEcho(t *testing.T) {
 	for line := range ch {
 		if line != "hello" {
 			t.Error("unexpected line", line)
-			return
 		}
+		return
 	}
 }

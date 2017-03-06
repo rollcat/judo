@@ -13,14 +13,14 @@ func (host *Host) pushFiles(job *Job,
 	if err != nil {
 		return
 	}
-	close(proc.Stdin)
+	close(proc.Stdin())
 	for {
 		select {
-		case line := <-proc.Stdout:
+		case line := <-proc.Stdout():
 			host.Log(line)
-		case line := <-proc.Stderr:
+		case line := <-proc.Stderr():
 			host.Log(line)
-		case err = <-proc.Done:
+		case err = <-proc.Done():
 			return err
 		case <-time.After(job.Timeout):
 			return TimeoutError{}
@@ -40,14 +40,14 @@ func (host *Host) Ssh(job *Job,
 	if err != nil {
 		return
 	}
-	close(proc.Stdin)
+	close(proc.Stdin())
 	for {
 		select {
-		case line := <-proc.Stdout:
+		case line := <-proc.Stdout():
 			host.Log(line)
-		case line := <-proc.Stderr:
+		case line := <-proc.Stderr():
 			host.Log(line)
-		case err = <-proc.Done:
+		case err = <-proc.Done():
 			return err
 		case <-time.After(job.Timeout):
 			return TimeoutError{}
@@ -67,14 +67,14 @@ func (host *Host) SshRead(job *Job,
 	if err != nil {
 		return
 	}
-	close(proc.Stdin)
+	close(proc.Stdin())
 	for {
 		select {
-		case line := <-proc.Stdout:
+		case line := <-proc.Stdout():
 			out = line
-		case line := <-proc.Stderr:
+		case line := <-proc.Stderr():
 			host.Log(line)
-		case err = <-proc.Done:
+		case err = <-proc.Done():
 			return
 		case <-time.After(job.Timeout):
 			return "", TimeoutError{}
