@@ -32,18 +32,29 @@ func (proc *Proc) Stderr() <-chan string {
 	return proc.stderr
 }
 
-func scanLines(r io.ReadCloser, ch chan<- string) {
-	defer close(ch)
-	defer r.Close()
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		assert(scanner.Err())
-		ch <- scanner.Text()
-	}
+func (proc *Proc) CloseStdin() {
+	close(proc.stdin)
 }
 
-func writeLines(w io.WriteCloser, ch <-chan string) {
-	defer w.Close()
+func scanLines(r io.ReadCloser, ch chan<- string, done chan<- interface{}) {
+	defer func() {
+		r.Close()
+		close(ch)
+		done <- nil
+	}()
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		text := scanner.Text()
+		ch <- text
+	}
+	assert(scanner.Err())
+}
+
+func writeLines(w io.WriteCloser, ch <-chan string, done chan<- interface{}) {
+	defer func() {
+		w.Close()
+		done <- nil
+	}()
 	for line := range ch {
 		bytes := append([]byte(line), []byte("\n")[0])
 		_, err := w.Write(bytes)
@@ -52,31 +63,38 @@ func writeLines(w io.WriteCloser, ch <-chan string) {
 }
 
 func NewProc(name string, args ...string) (proc *Proc, err error) {
+	bufsz := 0
 	proc = &Proc{
-		stdin:  make(chan string),
-		stdout: make(chan string),
-		stderr: make(chan string),
+		stdin:  make(chan string, bufsz),
+		stdout: make(chan string, bufsz),
+		stderr: make(chan string, bufsz),
 		done:   make(chan error),
 		cmd:    exec.Command(name, args...),
 	}
+	done := make(chan interface{})
 	pw0, err := proc.cmd.StdinPipe()
 	assert(err)
 	pr1, err := proc.cmd.StdoutPipe()
 	assert(err)
 	pr2, err := proc.cmd.StderrPipe()
 	assert(err)
-	go writeLines(pw0, proc.stdin)
-	go scanLines(pr1, proc.stdout)
-	go scanLines(pr2, proc.stderr)
-	assert(proc.cmd.Start())
 	go func() {
-		proc.done <- proc.cmd.Wait()
+		assert(proc.cmd.Start())
+		<-done
+		<-done
+		<-done
+		err = proc.cmd.Wait()
+		proc.done <- err
+		close(proc.done)
 	}()
+	go writeLines(pw0, proc.stdin, done)
+	go scanLines(pr1, proc.stdout, done)
+	go scanLines(pr2, proc.stderr, done)
 	return
 }
 
-func GetOutputLines(name string, args ...string) (ch chan string, err error) {
-	ch = make(chan string)
+func GetOutputLines(name string, args ...string) (<-chan string, error) {
+	ch := make(chan string)
 	proc, err := NewProc(name, args...)
 	if err != nil {
 		return nil, err
