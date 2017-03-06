@@ -11,7 +11,7 @@ func TestCat(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	proc.Stdin() <- "hello\n"
+	proc.Stdin() <- "hello"
 	close(proc.Stdin())
 	for {
 		select {

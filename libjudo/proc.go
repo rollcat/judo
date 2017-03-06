@@ -45,7 +45,8 @@ func scanLines(r io.ReadCloser, ch chan<- string) {
 func writeLines(w io.WriteCloser, ch <-chan string) {
 	defer w.Close()
 	for line := range ch {
-		_, err := w.Write([]byte(line))
+		bytes := append([]byte(line), []byte("\n")[0])
+		_, err := w.Write(bytes)
 		assert(err)
 	}
 }
