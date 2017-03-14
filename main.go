@@ -20,7 +20,7 @@ const usage = `usage:
     judo [common flags] -c command [--] ssh-targets
     judo [-v | -h]
 common flags:
-    [-d] [-e KEY=VALUE] [-f n] [-t s]`
+    [-d] [-e KEY | KEY=VALUE] [-f n] [-t s]`
 
 const version = "judo 0.2-dev"
 
@@ -92,14 +92,23 @@ func (e ArgumentError) Error() string {
 
 func ParseEnvArg(arg string, env map[string]string) error {
 	elems := strings.SplitN(arg, "=", 2)
-	if len(elems) < 2 {
-		return ArgumentError{Message: "missing = when parsing env arg"}
-	}
-	key, value := elems[0], elems[1]
-	if _, has := env[key]; has {
-		return ArgumentError{
-			Message: fmt.Sprintf("%s already supplied", key),
+	key := elems[0]
+	var value string
+	var has bool
+	switch len(elems) {
+	case 0:
+		panic("wtf")
+	case 1:
+		value, has = os.LookupEnv(key)
+		if !has {
+			return ArgumentError{
+				Message: fmt.Sprintf("%s not set", key),
+			}
 		}
+	case 2:
+		value = elems[1]
+	}
+	if _, has = env[key]; has {
 	}
 	env[key] = value
 	return nil
