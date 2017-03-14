@@ -104,7 +104,7 @@ func (host *Host) StartMaster() (err error) {
 	if host.master != nil {
 		panic("there already is a master")
 	}
-	proc, err := NewProc("ssh", "-M", host.Name, "cat", "-")
+	proc, err := NewProc("ssh", "-MN", host.Name)
 	if err != nil {
 		return
 	}
