@@ -74,8 +74,12 @@ The list of hard dependencies is intentionally kept minimal.
 ### Remote machines
 
 - [`env(1)`](https://linux.die.net/man/1/env) *
+- [`mkdir(1)`](https://linux.die.net/man/1/mkdir) *
+    - Must handle `-p`
 - [`mktemp(1)`](https://linux.die.net/man/1/mktemp) *
+    - Must handle `-d` and `TMPDIR`
 - [`rm(1)`](https://linux.die.net/man/1/rm) *
+    - Must handle `-r`
 - [`sshd(8)`][man-ssh]
 
 > \* consult your own operating system's manual pages!
