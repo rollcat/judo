@@ -36,16 +36,21 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 	defer host.StopMaster()
 
 	// make cozy
-	tmpdir, err := host.SshRead(job, "mktemp", "-d")
+	err = host.Ssh(job, "mkdir", "-p", "$HOME/.judo")
+	tmpdir, err := host.SshRead(job, "TMPDIR=$HOME/.judo", "mktemp", "-d")
 	if err != nil {
 		return err
+	}
+
+	cleanup := func() error {
+		return host.Ssh(job, "rm", "-r", tmpdir)
 	}
 
 	// ensure cleanup
 	defer func() {
 		if err := recover(); err != nil {
 			// oops! clean up remote
-			assert(host.Ssh(job, "rm", "-r", tmpdir))
+			assert(cleanup())
 			// continue panicking
 			panic(err)
 		}
@@ -76,7 +81,7 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 	)
 
 	// clean up
-	if err = host.Ssh(job, "rm", "-r", tmpdir); err != nil {
+	if err = cleanup(); err != nil {
 		return err
 	}
 	return err_job

@@ -341,8 +341,8 @@ You can always expect the following:
   machine.
 
     For example, if you invoked Judo as `judo -s foo/script host`,
-    then your file might exist in `/tmp/tmp.rsDa2Er8ZC/foo/script`,
-    where `/tmp/tmp.rsDa2Er8ZC` will be your working directory.
+    then your file might exist in `~/.judo/tmp.rsDa2Er8ZC/foo/script`,
+    where `~/.judo/tmp.rsDa2Er8ZC` will be your working directory.
 
     This is very useful when sending directories; `judo -s foo host`
     will transfer the entire `foo` directory to the remote, where
