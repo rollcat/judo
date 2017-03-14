@@ -63,6 +63,7 @@ func writeLines(w io.WriteCloser, ch <-chan string, done chan<- interface{}) {
 }
 
 func NewProc(name string, args ...string) (proc *Proc, err error) {
+	debugLogger.Println("proc:", append([]string{name}, args...))
 	bufsz := 0
 	proc = &Proc{
 		stdin:  make(chan string, bufsz),

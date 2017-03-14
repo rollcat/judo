@@ -20,7 +20,7 @@ const usage = `usage:
     judo [common flags] -c command [--] ssh-targets
     judo [-v | -h]
 common flags:
-    [-e KEY=VALUE] [-f n] [-t s]`
+    [-d] [-e KEY=VALUE] [-f n] [-t s]`
 
 const version = "judo 0.2-dev"
 
@@ -28,7 +28,7 @@ func ParseArgs(args []string) (
 	job *libjudo.Job, names []string, msg string,
 	status int, err error) {
 
-	names, opts, err := getopt.GetOpt(args, "hvs:c:t:e:", nil)
+	names, opts, err := getopt.GetOpt(args, "hvs:c:t:e:d", nil)
 	if err != nil {
 		return nil, nil, usage, 111, err
 	}
@@ -66,6 +66,8 @@ func ParseArgs(args []string) (
 			if err != nil {
 				return nil, nil, usage, 111, err
 			}
+		case "-d":
+			libjudo.MoreDebugLogging()
 		}
 	}
 
