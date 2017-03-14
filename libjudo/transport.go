@@ -39,12 +39,18 @@ func (host *Host) pushFiles(job *Job,
 	}
 }
 
-func (host *Host) Ssh(job *Job,
-	command string, args ...string) (err error) {
-	proc, err := NewProc(
-		"ssh",
-		append([]string{host.Name, command}, args...)...,
-	)
+func shquote(s string) string {
+	// TODO: quote literal inline '
+	return fmt.Sprintf(`'%s'`, s)
+}
+
+func (host *Host) Ssh(job *Job, command string) (err error) {
+	ssh_args := []string{host.Name, "env"}
+	for key, value := range host.Env {
+		ssh_args = append(ssh_args, fmt.Sprintf("%s=%s", key, value))
+	}
+	ssh_args = append(ssh_args, []string{"sh", "-c", shquote(command)}...)
+	proc, err := NewProc("ssh", ssh_args...)
 	if err != nil {
 		return
 	}
@@ -74,12 +80,8 @@ func (host *Host) Ssh(job *Job,
 	}
 }
 
-func (host *Host) SshRead(job *Job,
-	command string, args ...string) (out string, err error) {
-	proc, err := NewProc(
-		"ssh",
-		append([]string{host.Name, command}, args...)...,
-	)
+func (host *Host) SshRead(job *Job, command string) (out string, err error) {
+	proc, err := NewProc("ssh", []string{host.Name, command}...)
 	if err != nil {
 		return
 	}

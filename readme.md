@@ -331,8 +331,8 @@ partly by enforcing some design principles.
 
 You can always expect the following:
 
-- For any `host`, running `ssh host env` will describe the environment
-  fully, with one small difference, explained below.
+- For any `host`, running `judo -c env host` will describe your
+  runtime environment fully.
 
 - The environment variable `HOSTNAME` will be present, and will be set
   to the target's host name, as invoked on Judo's command line.

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rollcat/judo/libjudo"
@@ -19,7 +20,7 @@ const usage = `usage:
     judo [common flags] -c command [--] ssh-targets
     judo [-v | -h]
 common flags:
-    [-d] [-f n] [-t s]`
+    [-e KEY=VALUE] [-f n] [-t s]`
 
 const version = "judo 0.2-dev"
 
@@ -27,7 +28,7 @@ func ParseArgs(args []string) (
 	job *libjudo.Job, names []string, msg string,
 	status int, err error) {
 
-	names, opts, err := getopt.GetOpt(args, "hvs:c:t:", nil)
+	names, opts, err := getopt.GetOpt(args, "hvs:c:t:e:", nil)
 	if err != nil {
 		return nil, nil, usage, 111, err
 	}
@@ -35,6 +36,7 @@ func ParseArgs(args []string) (
 	var script *libjudo.Script
 	var command *libjudo.Command
 	var timeout uint64 = 30
+	env := make(map[string]string)
 
 	for _, opt := range opts {
 		switch opt.Opt() {
@@ -59,6 +61,11 @@ func ParseArgs(args []string) (
 			if err != nil {
 				return nil, nil, usage, 111, err
 			}
+		case "-e":
+			err = ParseEnvArg(opt.Arg(), env)
+			if err != nil {
+				return nil, nil, usage, 111, err
+			}
 		}
 	}
 
@@ -68,9 +75,32 @@ func ParseArgs(args []string) (
 
 	inventory := libjudo.NewInventory()
 	inventory.Timeout = time.Duration(timeout) * time.Second
-	job = libjudo.NewJob(inventory, script, command, timeout)
+	job = libjudo.NewJob(inventory, script, command, env, timeout)
 
 	return job, names, "", 0, nil
+}
+
+type ArgumentError struct {
+	Message string
+}
+
+func (e ArgumentError) Error() string {
+	return fmt.Sprintf("Bad argument: %s", e.Message)
+}
+
+func ParseEnvArg(arg string, env map[string]string) error {
+	elems := strings.SplitN(arg, "=", 2)
+	if len(elems) < 2 {
+		return ArgumentError{Message: "missing = when parsing env arg"}
+	}
+	key, value := elems[0], elems[1]
+	if _, has := env[key]; has {
+		return ArgumentError{
+			Message: fmt.Sprintf("%s already supplied", key),
+		}
+	}
+	env[key] = value
+	return nil
 }
 
 func main() {
@@ -86,7 +116,7 @@ func main() {
 	if status != 0 {
 		os.Exit(status)
 	}
-	job.Inventory.Populate(names)
+	job.PopulateInventory(names)
 	job.InstallSignalHandlers()
 	result := job.Execute()
 	successful, failful := result.Report()

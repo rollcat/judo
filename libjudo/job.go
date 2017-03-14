@@ -1,6 +1,7 @@
 package libjudo
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"path"
@@ -24,6 +25,7 @@ type Job struct {
 	*Script
 	*Command
 	Timeout time.Duration
+	AddEnv  map[string]string
 	signals chan os.Signal
 }
 
@@ -79,8 +81,9 @@ func (script *Script) IsDirMode() bool {
 	return script.dirmode
 }
 
-func NewJob(inventory *Inventory, script *Script, command *Command,
-	timeout uint64) (job *Job) {
+func NewJob(
+	inventory *Inventory, script *Script, command *Command,
+	env map[string]string, timeout uint64) (job *Job) {
 	// https://golang.org/pkg/os/signal/#Notify
 	signals := make(chan os.Signal, 1)
 	return &Job{
@@ -88,6 +91,7 @@ func NewJob(inventory *Inventory, script *Script, command *Command,
 		Command:   command,
 		Script:    script,
 		Timeout:   time.Duration(timeout) * time.Second,
+		AddEnv:    env,
 		signals:   signals,
 	}
 }
@@ -106,6 +110,18 @@ func (job Job) InstallSignalHandlers() {
 
 func (job Job) Log(msg string) {
 	logger.Printf("%s\n", msg)
+}
+
+func (job Job) PopulateInventory(names []string) {
+	job.Inventory.Populate(names)
+	for host := range job.GetHosts() {
+		for key, value := range job.AddEnv {
+			if _, has := host.Env[key]; has {
+				panic(fmt.Sprintf("Tried to override: %s", key))
+			}
+			host.Env[key] = value
+		}
+	}
 }
 
 func (job *Job) Execute() *JobResult {
