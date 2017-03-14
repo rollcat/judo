@@ -20,12 +20,12 @@ func (host *Host) pushFiles(job *Job,
 			if !ok {
 				continue
 			}
-			host.Log(line)
+			host.logger.Println(line)
 		case line, ok := <-proc.Stderr():
 			if !ok {
 				continue
 			}
-			host.Log(line)
+			host.logger.Println(line)
 		case err = <-proc.Done():
 			return err
 		case <-time.After(job.Timeout):
@@ -44,16 +44,17 @@ func shquote(s string) string {
 	return fmt.Sprintf(`'%s'`, s)
 }
 
-func (host *Host) Ssh(job *Job, command string) (err error) {
+func (host *Host) startSsh(job *Job, command string) (proc *Proc, err error) {
 	ssh_args := []string{host.Name, "env"}
 	for key, value := range host.Env {
 		ssh_args = append(ssh_args, fmt.Sprintf("%s=%s", key, value))
 	}
 	ssh_args = append(ssh_args, []string{"sh", "-c", shquote(command)}...)
-	proc, err := NewProc("ssh", ssh_args...)
-	if err != nil {
-		return
-	}
+	return NewProc("ssh", ssh_args...)
+}
+
+func (host *Host) Ssh(job *Job, command string) (err error) {
+	proc, err := host.startSsh(job, command)
 	close(proc.Stdin())
 	for {
 		select {
@@ -61,12 +62,12 @@ func (host *Host) Ssh(job *Job, command string) (err error) {
 			if !ok {
 				continue
 			}
-			host.Log(line)
+			host.logger.Println(line)
 		case line, ok := <-proc.Stderr():
 			if !ok {
 				continue
 			}
-			host.Log(line)
+			host.logger.Println(line)
 		case err = <-proc.Done():
 			return err
 		case <-time.After(job.Timeout):
@@ -81,10 +82,7 @@ func (host *Host) Ssh(job *Job, command string) (err error) {
 }
 
 func (host *Host) SshRead(job *Job, command string) (out string, err error) {
-	proc, err := NewProc("ssh", []string{host.Name, command}...)
-	if err != nil {
-		return
-	}
+	proc, err := host.startSsh(job, command)
 	close(proc.Stdin())
 	for {
 		select {
@@ -97,7 +95,7 @@ func (host *Host) SshRead(job *Job, command string) (out string, err error) {
 			if !ok {
 				continue
 			}
-			host.Log(line)
+			host.logger.Println(line)
 		case err = <-proc.Done():
 			return
 		case <-time.After(job.Timeout):

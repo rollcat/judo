@@ -32,28 +32,17 @@ type Job struct {
 // Holds the result of executing a Job
 type JobResult map[*Host]error
 
-func (result *JobResult) Report() (successful, failful int) {
-	var success []string
-	var failed = make(map[string]error)
+func (result *JobResult) Report() (successful []string, failful map[string]error) {
+	failful = make(map[string]error)
 	for host := range *result {
 		err := (*result)[host]
 		if err == nil {
-			success = append(success, host.Name)
+			successful = append(successful, host.Name)
 		} else {
-			failed[host.Name] = err
+			failful[host.Name] = err
 		}
 	}
-	successful = len(success)
-	failful = len(failed)
-	if failful > 0 {
-		for host := range failed {
-			logger.Printf("Failed: %s: %s\n", host, failed[host])
-		}
-	}
-	if successful > 0 {
-		logger.Printf("Success: %v\n", success)
-	}
-	return
+	return successful, failful
 }
 
 func NewCommand(cmd string) (command *Command) {
@@ -108,10 +97,6 @@ func (job Job) InstallSignalHandlers() {
 	}()
 }
 
-func (job Job) Log(msg string) {
-	logger.Printf("%s\n", msg)
-}
-
 func (job Job) PopulateInventory(names []string) {
 	job.Inventory.Populate(names)
 	for host := range job.GetHosts() {
@@ -126,14 +111,6 @@ func (job Job) PopulateInventory(names []string) {
 
 func (job *Job) Execute() *JobResult {
 	// The heart of judo, run the Job on remote Hosts
-
-	logger.Printf("Running: %v", func() (names []string) {
-		// look mama, Go has list comprehensions
-		for host := range job.GetHosts() {
-			names = append(names, host.Name)
-		}
-		return
-	}())
 
 	// Deliver the results of the job's execution on each Host
 	var results = make(map[*Host]chan error)

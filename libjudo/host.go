@@ -2,6 +2,7 @@ package libjudo
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path"
 )
@@ -14,6 +15,7 @@ type Host struct {
 	tmpdir string
 	cancel chan bool
 	master *Proc
+	logger *log.Logger
 }
 
 func NewHost(name string) (host *Host) {
@@ -25,11 +27,8 @@ func NewHost(name string) (host *Host) {
 		groups: []string{},
 		cancel: make(chan bool),
 		master: nil,
+		logger: log.New(os.Stderr, fmt.Sprintf("%s: ", name), 0),
 	}
-}
-
-func (host Host) Log(msg string) {
-	logger.Printf("%s: %s\n", host.Name, msg)
 }
 
 func (host *Host) SendRemoteAndRun(job *Job) (err error) {
@@ -116,15 +115,15 @@ func (host *Host) StartMaster() (err error) {
 				if !ok {
 					continue
 				}
-				host.Log(line)
+				host.logger.Println(line)
 			case line, ok := <-host.master.Stderr():
 				if !ok {
 					continue
 				}
-				host.Log(line)
+				host.logger.Println(line)
 			case err = <-host.master.Done():
 				if err != nil {
-					host.Log(err.Error())
+					host.logger.Println(err.Error())
 				}
 				host.master = nil
 			case <-host.cancel:
@@ -138,7 +137,7 @@ func (host *Host) StartMaster() (err error) {
 
 func (host *Host) StopMaster() error {
 	if host.master == nil || !host.master.IsAlive() {
-		host.Log("there was no master to stop")
+		host.logger.Println("there was no master to stop")
 		return nil
 	}
 	return host.master.Signal(os.Interrupt)

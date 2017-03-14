@@ -118,10 +118,27 @@ func main() {
 	}
 	job.PopulateInventory(names)
 	job.InstallSignalHandlers()
+
+	fmt.Printf("Running: %v\n", func() (names []string) {
+		// look mama, Go has list comprehensions
+		for host := range job.GetHosts() {
+			names = append(names, host.Name)
+		}
+		return
+	}())
 	result := job.Execute()
 	successful, failful := result.Report()
-	if failful > 0 {
-		if successful == 0 {
+	if len(failful) > 0 {
+		for host := range failful {
+			fmt.Printf("Failed: %s: %s\n", host, failful[host])
+		}
+	}
+	if len(successful) > 0 {
+		fmt.Printf("Success: %v\n", successful)
+	}
+
+	if len(failful) > 0 {
+		if len(successful) == 0 {
 			os.Exit(2)
 		} else {
 			os.Exit(1)

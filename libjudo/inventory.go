@@ -3,6 +3,7 @@ package libjudo
 import (
 	"bufio"
 	"io"
+	"log"
 	"os"
 	"path"
 	"regexp"
@@ -15,6 +16,7 @@ type Inventory struct {
 	hosts   []*Host
 	s       *SeenString
 	Timeout time.Duration
+	logger  Logger
 }
 
 func NewInventory() *Inventory {
@@ -22,6 +24,7 @@ func NewInventory() *Inventory {
 		hosts:   []*Host{},
 		s:       NewSeenString(),
 		Timeout: time.Duration(30) * time.Second,
+		logger:  log.New(os.Stderr, "inventory: ", 0),
 	}
 }
 
@@ -80,7 +83,7 @@ func (inventory *Inventory) readGroupsFromScript(fname string, ch chan *Host) {
 			if !ok {
 				continue
 			}
-			logger.Print(line)
+			inventory.logger.Print(line)
 		case err = <-proc.Done():
 			assert(err)
 			return

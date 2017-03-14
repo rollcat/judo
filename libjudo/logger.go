@@ -1,8 +1,18 @@
 package libjudo
 
-import (
-	"log"
-	"os"
-)
+type Logger interface {
+	Print(v ...interface{})
+	Printf(format string, v ...interface{})
+	Println(v ...interface{})
+}
 
-var logger = log.New(os.Stderr, "", 0)
+type NilLogger struct{}
+
+func (l *NilLogger) Print(v ...interface{}) {
+}
+
+func (l *NilLogger) Printf(format string, v ...interface{}) {
+}
+
+func (l *NilLogger) Println(v ...interface{}) {
+}
