@@ -88,9 +88,9 @@ func (host *Host) RunRemote(job *Job) (err error) {
 
 func (host *Host) Cancel() {
 	go func() {
-		for {
-			host.cancel <- true
-		}
+		// kill up to two: master and currently running
+		host.cancel <- true
+		host.cancel <- true
 	}()
 }
 
