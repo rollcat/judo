@@ -45,7 +45,9 @@ func shquote(s string) string {
 }
 
 func (host *Host) startSsh(job *Job, command string) (proc *Proc, err error) {
-	ssh_args := []string{host.Name, "env"}
+	ssh_args := []string{host.Name}
+	ssh_args = append(ssh_args, []string{"cd", host.tmpdir, "&&"}...)
+	ssh_args = append(ssh_args, []string{"env"}...)
 	for key, value := range host.Env {
 		ssh_args = append(ssh_args, fmt.Sprintf("%s=%s", key, value))
 	}
