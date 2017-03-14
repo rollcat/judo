@@ -98,13 +98,12 @@ func (host *Host) StartMaster() (err error) {
 	if host.master != nil {
 		panic("there already is a master")
 	}
-	proc, err := NewProc("ssh", "-M", host.Name)
+	proc, err := NewProc("ssh", "-M", host.Name, "cat", "-")
 	if err != nil {
 		return
 	}
 	host.master = proc
 	go func() {
-		close(host.master.Stdin())
 		for host.master != nil {
 			select {
 			case line, ok := <-host.master.Stdout():
@@ -123,8 +122,8 @@ func (host *Host) StartMaster() (err error) {
 				}
 				host.master = nil
 			case <-host.cancel:
+				host.master.CloseStdin()
 				host.StopMaster()
-				host.master = nil
 			}
 		}
 	}()
@@ -132,8 +131,9 @@ func (host *Host) StartMaster() (err error) {
 }
 
 func (host *Host) StopMaster() error {
-	if host.master == nil {
-		panic("there was no master to stop")
+	if host.master == nil || !host.master.IsAlive() {
+		host.Log("there was no master to stop")
+		return nil
 	}
 	return host.master.Signal(os.Interrupt)
 }
