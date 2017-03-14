@@ -86,6 +86,7 @@ func NewProc(name string, args ...string) (proc *Proc, err error) {
 		err = proc.cmd.Wait()
 		proc.done <- err
 		close(proc.done)
+		proc.cmd = nil
 	}()
 	go writeLines(pw0, proc.stdin, done)
 	go scanLines(pr1, proc.stdout, done)
@@ -93,6 +94,13 @@ func NewProc(name string, args ...string) (proc *Proc, err error) {
 	return
 }
 
+func (proc Proc) IsAlive() bool {
+	return proc.cmd == nil
+}
+
 func (proc Proc) Signal(sig os.Signal) error {
+	if !proc.IsAlive() {
+		panic("process already dead")
+	}
 	return proc.cmd.Process.Signal(sig)
 }
