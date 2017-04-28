@@ -88,7 +88,7 @@ func (inventory *Inventory) readGroupsFromScript(fname string, ch chan *Host) {
 			assert(err)
 			return
 		case <-time.After(inventory.Timeout):
-			panic(TimeoutError{})
+			panic(TimeoutError)
 		}
 	}
 }

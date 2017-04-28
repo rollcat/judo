@@ -29,12 +29,12 @@ func (host *Host) pushFiles(job *Job,
 		case err = <-proc.Done():
 			return err
 		case <-time.After(job.Timeout):
-			return TimeoutError{}
+			return TimeoutError
 		case <-host.cancel:
 			if proc.IsAlive() {
 				proc.Signal(os.Interrupt)
 			}
-			return CancelError{}
+			return CancelError
 		}
 	}
 }
@@ -73,12 +73,12 @@ func (host *Host) Ssh(job *Job, command string) (err error) {
 		case err = <-proc.Done():
 			return err
 		case <-time.After(job.Timeout):
-			return TimeoutError{}
+			return TimeoutError
 		case <-host.cancel:
 			if proc.IsAlive() {
 				proc.Signal(os.Interrupt)
 			}
-			return CancelError{}
+			return CancelError
 		}
 	}
 }
@@ -101,12 +101,12 @@ func (host *Host) SshRead(job *Job, command string) (out string, err error) {
 		case err = <-proc.Done():
 			return
 		case <-time.After(job.Timeout):
-			return "", TimeoutError{}
+			return "", TimeoutError
 		case <-host.cancel:
 			if proc.IsAlive() {
 				proc.Signal(os.Interrupt)
 			}
-			return "", CancelError{}
+			return "", CancelError
 		}
 	}
 }

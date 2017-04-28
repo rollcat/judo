@@ -1,14 +1,8 @@
 package libjudo
 
-type TimeoutError struct {
-}
-type CancelError struct {
-}
+import (
+	"errors"
+)
 
-func (e TimeoutError) Error() string {
-	return "Operation timed out"
-}
-
-func (e CancelError) Error() string {
-	return "Operation cancelled"
-}
+var TimeoutError = errors.New("Operation timed out")
+var CancelError = errors.New("Operation cancelled")
