@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 	"path"
+
+	"github.com/rollcat/judo/libproc"
 )
 
 // Represents a single host (invocation target)
@@ -14,7 +16,7 @@ type Host struct {
 	groups []string
 	tmpdir string
 	cancel chan bool
-	master *Proc
+	master *libproc.Proc
 	logger *log.Logger
 }
 

@@ -1,4 +1,4 @@
-package libjudo
+package libproc
 
 import (
 	"fmt"
