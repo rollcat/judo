@@ -110,3 +110,47 @@ func (host *Host) SshRead(job *Job, command string) (out string, err error) {
 		}
 	}
 }
+
+func (host *Host) StartMaster() (err error) {
+	if host.master != nil {
+		panic("there already is a master")
+	}
+	proc, err := NewProc("ssh", "-MN", host.Name)
+	if err != nil {
+		return
+	}
+	host.master = proc
+	go func() {
+		for host.master != nil {
+			select {
+			case line, ok := <-host.master.Stdout():
+				if !ok {
+					continue
+				}
+				host.logger.Println(line)
+			case line, ok := <-host.master.Stderr():
+				if !ok {
+					continue
+				}
+				host.logger.Println(line)
+			case err = <-host.master.Done():
+				if err != nil {
+					host.logger.Println(err.Error())
+				}
+				host.master = nil
+			case <-host.cancel:
+				host.master.CloseStdin()
+				host.StopMaster()
+			}
+		}
+	}()
+	return
+}
+
+func (host *Host) StopMaster() error {
+	if host.master == nil || !host.master.IsAlive() {
+		host.logger.Println("there was no master to stop")
+		return nil
+	}
+	return host.master.Signal(os.Interrupt)
+}
