@@ -13,8 +13,6 @@ import (
 	getopt "github.com/timtadh/getopt"
 )
 
-var debug_level = 0
-
 const usage = `usage:
     judo [common flags] -s script  [--] ssh-targets
     judo [common flags] -c command [--] ssh-targets
