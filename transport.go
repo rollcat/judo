@@ -44,7 +44,7 @@ func shquote(s string) string {
 	return fmt.Sprintf(`'%s'`, s)
 }
 
-func (host *Host) startSsh(job *Job, command string) (proc *Proc, err error) {
+func (host *Host) startSSH(job *Job, command string) (proc *Proc, err error) {
 	sshArgs := []string{host.Name}
 	sshArgs = append(sshArgs, []string{"cd", host.tmpdir, "&&"}...)
 	sshArgs = append(sshArgs, []string{"env"}...)
@@ -55,8 +55,8 @@ func (host *Host) startSsh(job *Job, command string) (proc *Proc, err error) {
 	return NewProc("ssh", sshArgs...)
 }
 
-func (host *Host) Ssh(job *Job, command string) (err error) {
-	proc, err := host.startSsh(job, command)
+func (host *Host) SSH(job *Job, command string) (err error) {
+	proc, err := host.startSSH(job, command)
 	close(proc.Stdin())
 	for {
 		select {
@@ -83,8 +83,8 @@ func (host *Host) Ssh(job *Job, command string) (err error) {
 	}
 }
 
-func (host *Host) SshRead(job *Job, command string) (out string, err error) {
-	proc, err := host.startSsh(job, command)
+func (host *Host) SSHRead(job *Job, command string) (out string, err error) {
+	proc, err := host.startSSH(job, command)
 	close(proc.Stdin())
 	for {
 		select {

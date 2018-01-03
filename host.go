@@ -40,8 +40,8 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 	defer host.StopMaster()
 
 	// make cozy
-	err = host.Ssh(job, "mkdir -p $HOME/.judo")
-	tmpdir, err := host.SshRead(job, "TMPDIR=$HOME/.judo mktemp -d")
+	err = host.SSH(job, "mkdir -p $HOME/.judo")
+	tmpdir, err := host.SSHRead(job, "TMPDIR=$HOME/.judo mktemp -d")
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 
 	cleanup := func() error {
 		host.tmpdir = ""
-		return host.Ssh(job, fmt.Sprintf("rm -r %s", tmpdir))
+		return host.SSH(job, fmt.Sprintf("rm -r %s", tmpdir))
 	}
 
 	// ensure cleanup
@@ -78,7 +78,7 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 	}
 
 	// do the actual work
-	errJob := host.Ssh(job, remoteCommand)
+	errJob := host.SSH(job, remoteCommand)
 
 	// clean up
 	if err = cleanup(); err != nil {
@@ -88,7 +88,7 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 }
 
 func (host *Host) RunRemote(job *Job) (err error) {
-	return host.Ssh(job, job.Command.cmd)
+	return host.SSH(job, job.Command.cmd)
 }
 
 func (host *Host) Cancel() {
