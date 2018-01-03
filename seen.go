@@ -22,9 +22,8 @@ func (s *SeenString) SeenBefore(name string) bool {
 	if !s.seen[name] {
 		s.seen[name] = true
 		return false
-	} else {
-		return true
 	}
+	return true
 }
 
 func (s *SeenString) See(name string) {
