@@ -66,11 +66,11 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 	host.pushFiles(job, job.Script.fname, tmpdir)
 
 	// are we in dirmode?
-	var remote_command string
+	var remoteCommand string
 	if !job.Script.dirmode {
-		remote_command = path.Join(tmpdir, path.Base(job.Script.fname))
+		remoteCommand = path.Join(tmpdir, path.Base(job.Script.fname))
 	} else {
-		remote_command = path.Join(
+		remoteCommand = path.Join(
 			tmpdir,
 			path.Base(job.Script.fname),
 			"script",
@@ -78,13 +78,13 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 	}
 
 	// do the actual work
-	err_job := host.Ssh(job, remote_command)
+	errJob := host.Ssh(job, remoteCommand)
 
 	// clean up
 	if err = cleanup(); err != nil {
 		return err
 	}
-	return err_job
+	return errJob
 }
 
 func (host *Host) RunRemote(job *Job) (err error) {

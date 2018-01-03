@@ -7,9 +7,9 @@ import (
 )
 
 func (host *Host) pushFiles(job *Job,
-	fname_local string, fname_remote string) (err error) {
-	var remote = fmt.Sprintf("[%s]:%s", host.Name, fname_remote)
-	proc, err := NewProc("scp", "-r", fname_local, remote)
+	fnameLocal string, fnameRemote string) (err error) {
+	var remote = fmt.Sprintf("[%s]:%s", host.Name, fnameRemote)
+	proc, err := NewProc("scp", "-r", fnameLocal, remote)
 	if err != nil {
 		return
 	}
@@ -45,14 +45,14 @@ func shquote(s string) string {
 }
 
 func (host *Host) startSsh(job *Job, command string) (proc *Proc, err error) {
-	ssh_args := []string{host.Name}
-	ssh_args = append(ssh_args, []string{"cd", host.tmpdir, "&&"}...)
-	ssh_args = append(ssh_args, []string{"env"}...)
+	sshArgs := []string{host.Name}
+	sshArgs = append(sshArgs, []string{"cd", host.tmpdir, "&&"}...)
+	sshArgs = append(sshArgs, []string{"env"}...)
 	for key, value := range host.Env {
-		ssh_args = append(ssh_args, fmt.Sprintf("%s=%s", key, value))
+		sshArgs = append(sshArgs, fmt.Sprintf("%s=%s", key, value))
 	}
-	ssh_args = append(ssh_args, []string{"sh", "-c", shquote(command)}...)
-	return NewProc("ssh", ssh_args...)
+	sshArgs = append(sshArgs, []string{"sh", "-c", shquote(command)}...)
+	return NewProc("ssh", sshArgs...)
 }
 
 func (host *Host) Ssh(job *Job, command string) (err error) {
