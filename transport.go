@@ -1,17 +1,15 @@
-package libjudo
+package main
 
 import (
 	"fmt"
 	"os"
 	"time"
-
-	"github.com/rollcat/judo/libproc"
 )
 
 func (host *Host) pushFiles(job *Job,
 	fname_local string, fname_remote string) (err error) {
 	var remote = fmt.Sprintf("[%s]:%s", host.Name, fname_remote)
-	proc, err := libproc.NewProc("scp", "-r", fname_local, remote)
+	proc, err := NewProc("scp", "-r", fname_local, remote)
 	if err != nil {
 		return
 	}
@@ -46,7 +44,7 @@ func shquote(s string) string {
 	return fmt.Sprintf(`'%s'`, s)
 }
 
-func (host *Host) startSsh(job *Job, command string) (proc *libproc.Proc, err error) {
+func (host *Host) startSsh(job *Job, command string) (proc *Proc, err error) {
 	ssh_args := []string{host.Name}
 	ssh_args = append(ssh_args, []string{"cd", host.tmpdir, "&&"}...)
 	ssh_args = append(ssh_args, []string{"env"}...)
@@ -54,7 +52,7 @@ func (host *Host) startSsh(job *Job, command string) (proc *libproc.Proc, err er
 		ssh_args = append(ssh_args, fmt.Sprintf("%s=%s", key, value))
 	}
 	ssh_args = append(ssh_args, []string{"sh", "-c", shquote(command)}...)
-	return libproc.NewProc("ssh", ssh_args...)
+	return NewProc("ssh", ssh_args...)
 }
 
 func (host *Host) Ssh(job *Job, command string) (err error) {
@@ -117,7 +115,7 @@ func (host *Host) StartMaster() (err error) {
 	if host.master != nil {
 		panic("there already is a master")
 	}
-	proc, err := libproc.NewProc("ssh", "-MN", host.Name)
+	proc, err := NewProc("ssh", "-MN", host.Name)
 	if err != nil {
 		return
 	}

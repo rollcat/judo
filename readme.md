@@ -445,12 +445,6 @@ could use one of our custom glue scripts:
 
     bin/wait-for-host -du chewie.rollc.at
 
-## Using as a library (don't)
-
-Most of the functionality is implemented internally as a library.
-Many of the interfaces are public, but perhaps shouldn't be.
-Don't use `libjudo` until 1.0 comes out!
-
 ## Known issues
 
 ### It's slow!

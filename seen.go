@@ -1,4 +1,4 @@
-package libjudo
+package main
 
 import (
 	"sync"

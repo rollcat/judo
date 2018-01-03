@@ -1,4 +1,4 @@
-package libjudo
+package main
 
 import (
 	"bufio"
@@ -8,8 +8,6 @@ import (
 	"path"
 	"regexp"
 	"time"
-
-	"github.com/rollcat/judo/libproc"
 )
 
 var inventoryLine = regexp.MustCompile("^[^# ]+")
@@ -68,7 +66,7 @@ func readGroups(r io.Reader) (out []string) {
 }
 
 func (inventory *Inventory) readGroupsFromScript(fname string, ch chan *Host) {
-	proc, err := libproc.NewProc(fname)
+	proc, err := NewProc(fname)
 	assert(err)
 	close(proc.Stdin())
 	for {

@@ -1,4 +1,4 @@
-package libproc
+package main
 
 import (
 	"fmt"

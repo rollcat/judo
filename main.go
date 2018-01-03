@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rollcat/judo/libjudo"
-
 	getopt "github.com/timtadh/getopt"
 )
 
@@ -23,7 +21,7 @@ common flags:
 const version = "judo 0.2-dev"
 
 func ParseArgs(args []string) (
-	job *libjudo.Job, names []string, msg string,
+	job *Job, names []string, msg string,
 	status int, err error) {
 
 	names, opts, err := getopt.GetOpt(args, "hvs:c:t:e:d", nil)
@@ -31,8 +29,8 @@ func ParseArgs(args []string) (
 		return nil, nil, usage, 111, err
 	}
 
-	var script *libjudo.Script
-	var command *libjudo.Command
+	var script *Script
+	var command *Command
 	var timeout uint64 = 30
 	env := make(map[string]string)
 
@@ -43,12 +41,12 @@ func ParseArgs(args []string) (
 		case "-v":
 			return nil, nil, version, 0, nil
 		case "-s":
-			script, err = libjudo.NewScript(opt.Arg())
+			script, err = NewScript(opt.Arg())
 			if err != nil {
 				return nil, nil, err.Error(), 111, nil
 			}
 		case "-c":
-			command = libjudo.NewCommand(opt.Arg())
+			command = NewCommand(opt.Arg())
 		case "-t":
 			timeout, err = strconv.ParseUint(opt.Arg(), 10, 64)
 			if err != nil {
@@ -65,7 +63,7 @@ func ParseArgs(args []string) (
 				return nil, nil, usage, 111, err
 			}
 		case "-d":
-			libjudo.MoreDebugLogging()
+			MoreDebugLogging()
 		}
 	}
 
@@ -73,9 +71,9 @@ func ParseArgs(args []string) (
 		return nil, nil, usage, 111, nil
 	}
 
-	inventory := libjudo.NewInventory()
+	inventory := NewInventory()
 	inventory.Timeout = time.Duration(timeout) * time.Second
-	job = libjudo.NewJob(inventory, script, command, env, timeout)
+	job = NewJob(inventory, script, command, env, timeout)
 
 	return job, names, "", 0, nil
 }
