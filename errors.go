@@ -4,5 +4,8 @@ import (
 	"errors"
 )
 
-var TimeoutError = errors.New("Operation timed out")
-var CancelError = errors.New("Operation cancelled")
+// ErrorTimeout Operation has timed out
+var ErrorTimeout = errors.New("Operation timed out")
+
+// ErrorCancel Operation was canceled while pending
+var ErrorCancel = errors.New("Operation canceled")
