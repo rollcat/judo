@@ -12,6 +12,7 @@ import (
 
 var inventoryLine = regexp.MustCompile("^[^# ]+")
 
+// Inventory is a collection of managed hosts.
 type Inventory struct {
 	hosts   []*Host
 	s       *SeenString
@@ -19,6 +20,7 @@ type Inventory struct {
 	logger  Logger
 }
 
+// NewInventory creates a new Inventory.
 func NewInventory() *Inventory {
 	return &Inventory{
 		hosts:   []*Host{},
@@ -28,6 +30,12 @@ func NewInventory() *Inventory {
 	}
 }
 
+// Populate the inventory with given names. Each name is resolved -
+// the process consists of looking up potential group and host names;
+// e.g. if you have a group named "foo" with hosts "a" and "b" in it,
+// the inventory will be populated with hosts "a" and "b". If the
+// hosts already exist in the inventory, they will be updated to
+// reflect group membership.
 func (inventory *Inventory) Populate(names []string) {
 	for _, name := range names {
 		for host := range inventory.resolveNames(name) {
@@ -36,6 +44,7 @@ func (inventory *Inventory) Populate(names []string) {
 	}
 }
 
+// GetHosts iterates over all hosts in the inventory.
 func (inventory *Inventory) GetHosts() (ch chan *Host) {
 	ch = make(chan *Host)
 	go func() {

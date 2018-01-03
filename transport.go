@@ -55,6 +55,8 @@ func (host *Host) startSSH(job *Job, command string) (proc *Proc, err error) {
 	return NewProc("ssh", sshArgs...)
 }
 
+// SSH executes the given shell command on the remote host, and
+// reports exist status.
 func (host *Host) SSH(job *Job, command string) (err error) {
 	proc, err := host.startSSH(job, command)
 	close(proc.Stdin())
@@ -83,6 +85,8 @@ func (host *Host) SSH(job *Job, command string) (err error) {
 	}
 }
 
+// SSHRead executes the given shell command on the remote host, and
+// returns its output together with exit status.
 func (host *Host) SSHRead(job *Job, command string) (out string, err error) {
 	proc, err := host.startSSH(job, command)
 	close(proc.Stdin())
@@ -111,6 +115,8 @@ func (host *Host) SSHRead(job *Job, command string) (out string, err error) {
 	}
 }
 
+// StartMaster starts the SSH master process for this host, to speed
+// up execution of consecutive SSH requests.
 func (host *Host) StartMaster() (err error) {
 	if host.master != nil {
 		panic("there already is a master")
@@ -147,6 +153,7 @@ func (host *Host) StartMaster() (err error) {
 	return
 }
 
+// StopMaster kills the master process.
 func (host *Host) StopMaster() error {
 	if host.master == nil || !host.master.IsAlive() {
 		host.logger.Println("there was no master to stop")

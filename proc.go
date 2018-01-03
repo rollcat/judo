@@ -7,6 +7,8 @@ import (
 	"os/exec"
 )
 
+// Proc wraps an OS process with a friendly, channel-based interface
+// and line buffering.
 type Proc struct {
 	stdin  chan string
 	stdout chan string
@@ -16,22 +18,33 @@ type Proc struct {
 	cmd *exec.Cmd
 }
 
+// Done returns a channel, on which the caller should wait for the
+// process to complete. The channel will return an error status
+// corresponding to the process' exit code. Only one caller can wait
+// on this channel.
 func (proc *Proc) Done() <-chan error {
 	return proc.done
 }
 
+// Stdin returns a channel, which can be used to send input lines to
+// the process. The channel is shared between callers.
 func (proc *Proc) Stdin() chan<- string {
 	return proc.stdin
 }
 
+// Stdout returns a channel, on which successive lines from process'
+// stdout can be received. The channel is shared between callers.
 func (proc *Proc) Stdout() <-chan string {
 	return proc.stdout
 }
 
+// Stderr returns a channel, on which successive lines from process'
+// stderr can be received. The channel is shared between callers.
 func (proc *Proc) Stderr() <-chan string {
 	return proc.stderr
 }
 
+// CloseStdin closes the standard input of the process.
 func (proc *Proc) CloseStdin() {
 	close(proc.stdin)
 }
@@ -62,6 +75,7 @@ func writeLines(w io.WriteCloser, ch <-chan string, done chan<- interface{}) {
 	}
 }
 
+// NewProc allocates and starts a new Proc.
 func NewProc(name string, args ...string) (proc *Proc, err error) {
 	bufsz := 0
 	proc = &Proc{
@@ -94,10 +108,12 @@ func NewProc(name string, args ...string) (proc *Proc, err error) {
 	return
 }
 
+// IsAlive reports whether the process is still running.
 func (proc Proc) IsAlive() bool {
 	return proc.cmd == nil
 }
 
+// Signal sends the given signal to proc.
 func (proc Proc) Signal(sig os.Signal) error {
 	if !proc.IsAlive() {
 		panic("process already dead")

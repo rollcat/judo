@@ -20,7 +20,7 @@ common flags:
 
 const version = "judo 0.2-dev"
 
-func ParseArgs(args []string) (
+func parseArgs(args []string) (
 	job *Job, names []string, msg string,
 	status int, err error) {
 
@@ -58,12 +58,12 @@ func ParseArgs(args []string) (
 				return nil, nil, usage, 111, err
 			}
 		case "-e":
-			err = ParseEnvArg(opt.Arg(), env)
+			err = parseEnvArg(opt.Arg(), env)
 			if err != nil {
 				return nil, nil, usage, 111, err
 			}
 		case "-d":
-			MoreDebugLogging()
+			moreDebugLogging()
 		}
 	}
 
@@ -78,15 +78,15 @@ func ParseArgs(args []string) (
 	return job, names, "", 0, nil
 }
 
-type ArgumentError struct {
+type argumentError struct {
 	Message string
 }
 
-func (e ArgumentError) Error() string {
+func (e argumentError) Error() string {
 	return fmt.Sprintf("Bad argument: %s", e.Message)
 }
 
-func ParseEnvArg(arg string, env map[string]string) error {
+func parseEnvArg(arg string, env map[string]string) error {
 	elems := strings.SplitN(arg, "=", 2)
 	key := elems[0]
 	var value string
@@ -97,7 +97,7 @@ func ParseEnvArg(arg string, env map[string]string) error {
 	case 1:
 		value, has = os.LookupEnv(key)
 		if !has {
-			return ArgumentError{
+			return argumentError{
 				Message: fmt.Sprintf("%s not set", key),
 			}
 		}
@@ -111,7 +111,7 @@ func ParseEnvArg(arg string, env map[string]string) error {
 }
 
 func main() {
-	job, names, msg, status, err := ParseArgs(os.Args[1:])
+	job, names, msg, status, err := parseArgs(os.Args[1:])
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(111)

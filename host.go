@@ -7,7 +7,7 @@ import (
 	"path"
 )
 
-// Represents a single host (invocation target)
+// Host represents a single host (invocation target)
 type Host struct {
 	Name   string
 	Env    map[string]string
@@ -18,6 +18,7 @@ type Host struct {
 	logger *log.Logger
 }
 
+// NewHost creates a new Host struct with default values.
 func NewHost(name string) (host *Host) {
 	env := make(map[string]string)
 	env["HOSTNAME"] = name
@@ -31,6 +32,9 @@ func NewHost(name string) (host *Host) {
 	}
 }
 
+// SendRemoteAndRun establishes a connection to the host, sends off
+// and executes the given job, and returns any possible resulting
+// error.
 func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 	// speedify!
 	host.StartMaster()
@@ -87,10 +91,13 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 	return errJob
 }
 
+// RunRemote runs the given job on the host, assuming the connection
+// has been already established, and job files copied over.
 func (host *Host) RunRemote(job *Job) (err error) {
 	return host.SSH(job, job.Command.cmd)
 }
 
+// Cancel execution of code on the remote end.
 func (host *Host) Cancel() {
 	go func() {
 		// kill up to two: master and currently running

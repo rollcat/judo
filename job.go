@@ -8,18 +8,21 @@ import (
 	"time"
 )
 
-// file/directory to be sent to the remote Host for execution
+// Script represents the file/directory to be sent to the remote Host
+// for execution, potentially as a part of a Job.
 type Script struct {
 	fname   string
 	dirmode bool
 }
 
-// ad-hoc command to be executed on the remote Host
+// Command represents an ad-hoc command to be executed on the remote
+// Host, potentially as a part of a Job.
 type Command struct {
 	cmd string
 }
 
-// a set of Hosts on which to run Scripts/Commands
+// Job is a container for the host inventory and the script/commands
+// to run on them.
 type Job struct {
 	*Inventory
 	*Script
@@ -29,9 +32,10 @@ type Job struct {
 	signals chan os.Signal
 }
 
-// Holds the result of executing a Job
+// JobResult holds the per-host results of executing a Job.
 type JobResult map[*Host]error
 
+// Report groups the result into successful and failed host names.
 func (result *JobResult) Report() (successful []string, failful map[string]error) {
 	failful = make(map[string]error)
 	for host := range *result {
@@ -45,10 +49,14 @@ func (result *JobResult) Report() (successful []string, failful map[string]error
 	return successful, failful
 }
 
+// NewCommand creates a Command.
 func NewCommand(cmd string) (command *Command) {
 	return &Command{cmd}
 }
 
+// NewScript creates a script. The named file/directory must exist and
+// be either a regular, executable file, or a "dirmode" style
+// directory (with an executable file named "script" inside).
 func NewScript(fname string) (script *Script, err error) {
 	script = &Script{fname: fname, dirmode: false}
 	stat, err := os.Stat(script.fname)
@@ -66,10 +74,12 @@ func NewScript(fname string) (script *Script, err error) {
 	return script, nil
 }
 
+// IsDirMode reports whether we're executing in dirmode.
 func (script *Script) IsDirMode() bool {
 	return script.dirmode
 }
 
+// NewJob creates a new Job object.
 func NewJob(
 	inventory *Inventory, script *Script, command *Command,
 	env map[string]string, timeout uint64) (job *Job) {
@@ -85,6 +95,8 @@ func NewJob(
 	}
 }
 
+// InstallSignalHandlers installs a signal handler, which will catch
+// interrupt requests, and cancel pending jobs.
 func (job Job) InstallSignalHandlers() {
 	signal.Notify(job.signals, os.Interrupt)
 	go func() {
@@ -97,6 +109,9 @@ func (job Job) InstallSignalHandlers() {
 	}()
 }
 
+// PopulateInventory populates the inventory according to rules
+// explained therein; and associate environment overrides with the
+// hosts.
 func (job Job) PopulateInventory(names []string) {
 	job.Inventory.Populate(names)
 	for host := range job.GetHosts() {
@@ -109,6 +124,7 @@ func (job Job) PopulateInventory(names []string) {
 	}
 }
 
+// Execute is the entry point of a Job.
 func (job *Job) Execute() *JobResult {
 	// The heart of judo, run the Job on remote Hosts
 
