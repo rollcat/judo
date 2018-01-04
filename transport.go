@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -40,8 +42,27 @@ func (host *Host) pushFiles(job *Job,
 }
 
 func shquote(s string) string {
-	// TODO: quote literal inline '
-	return fmt.Sprintf(`'%s'`, s)
+	var b bytes.Buffer
+	b.WriteRune('\'')
+	for _, c := range s {
+		if c == '\'' { // ASCII "'"
+			b.WriteString("'\\''")
+		} else {
+			b.WriteRune(c)
+		}
+	}
+	b.WriteRune('\'')
+	return b.String()
+}
+
+// Serialize an array of strings into a string that, when passed to a
+// shell, will again be interpreted as the same array of strings.
+func shargs(ss []string) string {
+	var qs []string
+	for _, s := range ss {
+		qs = append(qs, shquote(s))
+	}
+	return strings.Join(ss, " ")
 }
 
 func (host *Host) startSSH(job *Job, command string) (proc *Proc, err error) {
