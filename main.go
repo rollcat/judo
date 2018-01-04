@@ -18,7 +18,7 @@ const usage = `usage:
 common flags:
     [-d] [-e KEY | KEY=VALUE] [-f n] [-t s]`
 
-const version = "judo 0.2-dev"
+const version = "judo 0.3-dev"
 
 func parseArgs(args []string) (
 	job *Job, names []string, msg string,
