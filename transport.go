@@ -67,7 +67,11 @@ func shargs(ss []string) string {
 
 func (host *Host) startSSH(job *Job, command string) (proc *Proc, err error) {
 	sshArgs := []string{host.Name}
-	sshArgs = append(sshArgs, []string{"cd", host.workdir, "&&"}...)
+	if host.workdir != "" {
+		sshArgs = append(sshArgs, []string{
+			"cd", host.workdir, "&&",
+		}...)
+	}
 	sshArgs = append(sshArgs, []string{"env"}...)
 	for key, value := range host.Env {
 		sshArgs = append(sshArgs, fmt.Sprintf("%s=%s", key, value))
