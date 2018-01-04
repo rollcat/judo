@@ -9,13 +9,13 @@ import (
 
 // Host represents a single host (invocation target)
 type Host struct {
-	Name   string
-	Env    map[string]string
-	groups []string
-	tmpdir string
-	cancel chan bool
-	master *Proc
-	logger *log.Logger
+	Name    string
+	Env     map[string]string
+	groups  []string
+	workdir string
+	cancel  chan bool
+	master  *Proc
+	logger  *log.Logger
 }
 
 // NewHost creates a new Host struct with default values.
@@ -45,15 +45,15 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 
 	// make cozy
 	err = host.SSH(job, "mkdir -p $HOME/.judo")
-	tmpdir, err := host.SSHRead(job, "TMPDIR=$HOME/.judo mktemp -d")
+	workdir, err := host.SSHRead(job, "TMPDIR=$HOME/.judo mktemp -d")
 	if err != nil {
 		return err
 	}
-	host.tmpdir = tmpdir
+	host.workdir = workdir
 
 	cleanup := func() error {
-		host.tmpdir = ""
-		return host.SSH(job, fmt.Sprintf("rm -r %s", tmpdir))
+		host.workdir = ""
+		return host.SSH(job, fmt.Sprintf("rm -r %s", workdir))
 	}
 
 	// ensure cleanup
@@ -67,15 +67,18 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 	}()
 
 	// push files to remote
-	host.pushFiles(job, job.Script.fname, tmpdir)
+	host.pushFiles(job, job.Script.fname, workdir)
 
 	// are we in dirmode?
 	var remoteCommand string
 	if !job.Script.dirmode {
-		remoteCommand = path.Join(tmpdir, path.Base(job.Script.fname))
+		remoteCommand = path.Join(
+			workdir,
+			path.Base(job.Script.fname),
+		)
 	} else {
 		remoteCommand = path.Join(
-			tmpdir,
+			workdir,
 			path.Base(job.Script.fname),
 			"script",
 		)
