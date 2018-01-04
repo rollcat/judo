@@ -2,5 +2,5 @@
 set -eu
 echo "Bootstrapping ${HOSTNAME}!"
 echo "My current working directory: $(pwd)"
-data="$(cat ./bootstrap/data.txt)"
+data="$(cat ./examples/bootstrap/data.txt)"
 echo "My data: $data"

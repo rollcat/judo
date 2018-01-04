@@ -66,21 +66,57 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 		}
 	}()
 
-	// push files to remote
-	host.pushFiles(job, job.Script.fname, workdir)
-
-	// are we in dirmode?
-	var remoteCommand string
-	if !job.Script.dirmode {
-		remoteCommand = path.Join(
+	// Figure out the correct path for the remote script
+	var remoteScriptDir string
+	if job.Script.dirmode {
+		remoteScriptDir = path.Join(
 			workdir,
-			path.Base(job.Script.fname),
+			job.Script.fname,
 		)
 	} else {
-		remoteCommand = path.Join(
+		remoteScriptDir = path.Join(
 			workdir,
+			path.Dir(job.Script.fname),
+		)
+	}
+
+	// Create remote directory structure
+	if err = host.SSH(
+		job,
+		fmt.Sprintf("mkdir -p %s", remoteScriptDir),
+	); err != nil {
+		return err
+	}
+
+	// push files to remote
+	if job.Script.dirmode {
+		if err = host.pushFiles(
+			job,
+			job.Script.fname,
+			// We need to strip one level of path, otherwise
+			// scp will duplicate it. Eh...
+			path.Dir(remoteScriptDir),
+		); err != nil {
+			return err
+		}
+	} else {
+		if err = host.pushFiles(
+			job,
+			job.Script.fname,
+			remoteScriptDir,
+		); err != nil {
+			return err
+		}
+	}
+
+	// Figure out what is the remote command
+	var remoteCommand string
+	if job.Script.dirmode {
+		remoteCommand = path.Join(remoteScriptDir, "script")
+	} else {
+		remoteCommand = path.Join(
+			remoteScriptDir,
 			path.Base(job.Script.fname),
-			"script",
 		)
 	}
 
