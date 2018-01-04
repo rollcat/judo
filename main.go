@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -31,7 +30,7 @@ func parseArgs(args []string) (
 
 	var script *Script
 	var command *Command
-	var timeout uint64 = 30
+	var timeout = time.Duration(30) * time.Second
 	env := make(map[string]string)
 
 	for _, opt := range opts {
@@ -43,12 +42,12 @@ func parseArgs(args []string) (
 		case "-s":
 			script, err = NewScript(opt.Arg())
 			if err != nil {
-				return nil, nil, err.Error(), 111, nil
+				return nil, nil, usage, 111, nil
 			}
 		case "-c":
 			command = NewCommand(opt.Arg())
 		case "-t":
-			timeout, err = strconv.ParseUint(opt.Arg(), 10, 64)
+			timeout, err = time.ParseDuration(opt.Arg())
 			if err != nil {
 				return nil, nil, usage, 111, err
 			}
@@ -72,7 +71,7 @@ func parseArgs(args []string) (
 	}
 
 	inventory := NewInventory()
-	inventory.Timeout = time.Duration(timeout) * time.Second
+	inventory.Timeout = timeout
 	job = NewJob(inventory, script, command, env, timeout)
 
 	return job, names, "", 0, nil
@@ -113,8 +112,8 @@ func parseEnvArg(arg string, env map[string]string) error {
 func main() {
 	job, names, msg, status, err := parseArgs(os.Args[1:])
 	if err != nil {
-		log.Fatal(err)
-		os.Exit(111)
+		fmt.Println(err)
+		status = 111
 	}
 	if msg != "" {
 		fmt.Println(msg)

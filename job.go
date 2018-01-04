@@ -82,14 +82,14 @@ func (script *Script) IsDirMode() bool {
 // NewJob creates a new Job object.
 func NewJob(
 	inventory *Inventory, script *Script, command *Command,
-	env map[string]string, timeout uint64) (job *Job) {
+	env map[string]string, timeout time.Duration) (job *Job) {
 	// https://golang.org/pkg/os/signal/#Notify
 	signals := make(chan os.Signal, 1)
 	return &Job{
 		Inventory: inventory,
 		Command:   command,
 		Script:    script,
-		Timeout:   time.Duration(timeout) * time.Second,
+		Timeout:   timeout,
 		AddEnv:    env,
 		signals:   signals,
 	}
