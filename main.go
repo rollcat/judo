@@ -13,11 +13,12 @@ import (
 const usage = `usage:
     judo [common flags] -s script  [--] ssh-targets
     judo [common flags] -c command [--] ssh-targets
-    judo [-v | -h]
+    judo -v [required-version]
+    judo -h
 common flags:
     [-d] [-e KEY | KEY=VALUE] [-f n] [-t s]`
 
-const version = "judo 0.3-dev"
+const version = "0.4"
 
 func parseArgs(args []string) (
 	job *Job, names []string, msg string,
@@ -38,6 +39,9 @@ func parseArgs(args []string) (
 		case "-h":
 			return nil, nil, usage, 0, nil
 		case "-v":
+			if len(names) > 0 && version != names[0] {
+				return nil, nil, version, 1, nil
+			}
 			return nil, nil, version, 0, nil
 		case "-s":
 			script, err = NewScript(opt.Arg())

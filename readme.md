@@ -471,40 +471,45 @@ send suggestions on improving the readme.
 Sure! Send me bug reports, suggestions, diffs, hate mail and
 accolades - as appropriate. Contact info below.
 
-Please do mind the following however:
+## Simplicity and stability
 
-- Judo is intentionally simple. It aims to have 90% of
-  [Ansible's][ansible] core features, while having 1% of the code (or
-  less). If Judo can't do something for you, you should investigate
-  the following:
+Judo is intentionally simple. It aims to have 90% of
+[Ansible's][ansible] core features, while having 1% of the code (or
+less). If Judo can't do something for you, you should investigate the
+following:
 
-    - Rethink your problem,
-    - Look into using [Ansible][ansible] instead.
+- Rethink your problem,
+- Look into using [Ansible][ansible] instead.
 
 [ansible]: https://www.ansible.com/
 
-- Integrations with specific OS's on remote targets are left to
-  separate projects - barring the minimum needed to set up the remote
-  execution environment. However, Judo should make it simple to
-  bootstrap some sort of "rosetta stone" on the remote end.
+Integrations with specific OS's on remote targets are left to separate
+projects - barring the minimum needed to set up the remote execution
+environment. However, Judo should make it simple to bootstrap some
+sort of "rosetta stone" on the remote end.
 
-- The SLOC count of the entire source code (`grep -v '^$' $(find .
-  -name "*.go") | wc -l`) shall never exceed 2000 lines.
+The dependencies, for building or for running, on control or on remote
+machines, shall never change.
 
-- The dependencies, for building or for running, on control or on
-  remote machines, shall never change.
+When the 1.0 release appears, the feature set and the interface will
+be frozen until it's time for a 2.0. All (well written) scripts must
+continue working, unchanged. If 2.0 ever appears, well written scripts
+should require no adjustments at all.
 
-- When the 1.0 release appears, the feature set and the interface will
-  be frozen until it's time for a 2.0. All (well written) scripts must
-  continue working, unchanged. If 2.0 ever appears, well written
-  scripts should require no adjustments at all.
+The time for 2.0 will not be after 1.9; 1.9 will be followed by 1.10
+and 1.11, all the way to 1.61, if necessary. Same for 2.x; expect 2.71
+before 3.0.
 
-- The time for 2.0 will not be after 1.9; 1.9 will be followed by 1.10
-  and 1.11, all the way to 1.61, if necessary. Same for 2.x; expect
-  2.71 before 3.0.
+Testing for the required version number is made simple via an optional
+argument to the `-v` flag. In the 0.x series, it must be an exact
+version string match; past 1.0, it will specify the minimal required
+version. This feature was added in version 0.4, so as of today, only
+this will work:
+
+    judo -v 0.4
 
 ## Author
 
-&copy; 2016 Kamil Cholewiński <<kamil@rollc.at>>
+&copy; 2016-2018 Kamil Cholewiński <<kamil@rollc.at>>
 
 License is [MIT](/license.txt).
