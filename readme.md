@@ -451,14 +451,11 @@ could use one of our custom glue scripts:
 
 It's not significantly slower than running plain [SSH][].
 
-If you are using session sharing (`ControlMaster` and friends) in auto
-mode with `ControlPersist`, Judo will wait until the master in the
-background exits. If it's not cool, you're advised to disable it.
+Judo automatically starts a master SSH session through which all other
+sessions are multiplexed to avoid the overhead of establishing multiple
+SSH connections.
 
-You could also keep a master SSH connection open somewhere else in the
-background. Since Judo invokes [`ssh(1)`][man-ssh] and
-[`scp(1)`][man-ssh] a couple of times per each session, this may speed
-things up significantly.
+Patches/ideas to further speed up Judo are welcome.
 
 ## A book?
 

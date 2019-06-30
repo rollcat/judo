@@ -8,10 +8,15 @@ import (
 	"time"
 )
 
+const (
+	sshControlPath    = "~/.ssh/judo-control-%C"
+	sshControlPathOpt = "-o ControlPath " + sshControlPath
+)
+
 func (host *Host) pushFiles(job *Job,
 	fnameLocal string, fnameRemote string) (err error) {
 	var remote = fmt.Sprintf("[%s]:%s", host.Name, fnameRemote)
-	proc, err := NewProc("scp", "-r", fnameLocal, remote)
+	proc, err := NewProc("scp", sshControlPathOpt, "-r", fnameLocal, remote)
 	if err != nil {
 		return
 	}
@@ -66,7 +71,10 @@ func shargs(ss []string) string {
 }
 
 func (host *Host) startSSH(job *Job, command string) (proc *Proc, err error) {
-	sshArgs := []string{host.Name}
+	sshArgs := []string{
+		sshControlPathOpt,
+		host.Name,
+	}
 	if host.workdir != "" {
 		sshArgs = append(sshArgs, []string{
 			"cd", host.workdir, "&&",
@@ -146,7 +154,7 @@ func (host *Host) StartMaster() (err error) {
 	if host.master != nil {
 		panic("there already is a master")
 	}
-	proc, err := NewProc("ssh", "-MN", host.Name)
+	proc, err := NewProc("ssh", sshControlPathOpt, "-MN", host.Name)
 	if err != nil {
 		return
 	}
