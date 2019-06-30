@@ -110,7 +110,7 @@ func NewProc(name string, args ...string) (proc *Proc, err error) {
 
 // IsAlive reports whether the process is still running.
 func (proc Proc) IsAlive() bool {
-	return proc.cmd == nil
+	return proc.cmd != nil
 }
 
 // Signal sends the given signal to proc.
