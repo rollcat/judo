@@ -10,15 +10,24 @@ import (
 )
 
 const (
-	sshControlPath    = "~/.ssh/judo-control-%C"
-	sshControlPathOpt = "-o ControlPath=" + sshControlPath
-	sshBatchOpt       = "-o BatchMode=yes"
+	sshControlPath      = "~/.ssh/judo-control-%C"
+	sshControlPathOpt   = "-o ControlPath=" + sshControlPath
+	sshBatchOpt         = "-o BatchMode=yes"
+	sshControlMasterOpt = "-o ControlMaster=no"
 )
 
 func (host *Host) pushFiles(job *Job,
 	fnameLocal string, fnameRemote string) (err error) {
 	var remote = fmt.Sprintf("[%s]:%s", host.Name, fnameRemote)
-	proc, err := NewProc("scp", sshBatchOpt, sshControlPathOpt, "-r", fnameLocal, remote)
+	proc, err := NewProc(
+		"scp",
+		sshBatchOpt,
+		sshControlPathOpt,
+		sshControlMasterOpt,
+		"-r",
+		fnameLocal,
+		remote,
+	)
 	if err != nil {
 		return
 	}
@@ -76,6 +85,7 @@ func (host *Host) startSSH(job *Job, command string) (proc *Proc, err error) {
 	sshArgs := []string{
 		sshBatchOpt,
 		sshControlPathOpt,
+		sshControlMasterOpt,
 		host.Name,
 	}
 	if host.workdir != "" {
