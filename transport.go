@@ -9,14 +9,18 @@ import (
 )
 
 const (
-	sshControlPath    = "~/.ssh/judo-control-%C"
-	sshControlPathOpt = "-o ControlPath " + sshControlPath
+	sshControlPath        = "~/.ssh/judo-control-%C"
+	sshControlPathOpt     = "-o ControlPath " + sshControlPath
+	sshControlMasterNoOpt = "-o ControlMaster no"
 )
 
 func (host *Host) pushFiles(job *Job,
 	fnameLocal string, fnameRemote string) (err error) {
 	var remote = fmt.Sprintf("[%s]:%s", host.Name, fnameRemote)
-	proc, err := NewProc("scp", sshControlPathOpt, "-r", fnameLocal, remote)
+	proc, err := NewProc("scp",
+		sshControlPathOpt,
+		sshControlMasterNoOpt,
+		"-r", fnameLocal, remote)
 	if err != nil {
 		return
 	}
@@ -73,6 +77,7 @@ func shargs(ss []string) string {
 func (host *Host) startSSH(job *Job, command string) (proc *Proc, err error) {
 	sshArgs := []string{
 		sshControlPathOpt,
+		sshControlMasterNoOpt,
 		host.Name,
 	}
 	if host.workdir != "" {
