@@ -25,7 +25,7 @@ func NewInventory() *Inventory {
 	return &Inventory{
 		hosts:   []*Host{},
 		s:       NewSeenString(),
-		Timeout: time.Duration(30) * time.Second,
+		Timeout: time.Duration(5) * time.Minute,
 		logger:  log.New(os.Stderr, "inventory: ", 0),
 	}
 }
