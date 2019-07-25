@@ -16,7 +16,7 @@ const (
 
 func (host *Host) pushFiles(job *Job,
 	fnameLocal string, fnameRemote string) (err error) {
-	var remote = fmt.Sprintf("[%s]:%s", host.Name, fnameRemote)
+	var remote = fmt.Sprintf("%s:%s", host.Name, fnameRemote)
 	proc, err := NewProc("scp",
 		sshControlPathOpt,
 		sshControlMasterNoOpt,
