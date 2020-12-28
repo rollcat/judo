@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -151,6 +152,10 @@ func (host *Host) SSHRead(job *Job, command string) (out string, err error) {
 // StartMaster starts the SSH master process for this host, to speed
 // up execution of consecutive SSH requests.
 func (host *Host) StartMaster() (err error) {
+	if runtime.GOOS == "windows" {
+		// Master process on Windows seems problematic
+		return nil
+	}
 	if host.master != nil {
 		panic("there already is a master")
 	}
