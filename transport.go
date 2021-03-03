@@ -10,7 +10,7 @@ import (
 
 const (
 	sshControlPath    = "~/.ssh/judo-control-%C"
-	sshControlPathOpt = "-o ControlPath " + sshControlPath
+	sshControlPathOpt = "-o ControlPath=" + sshControlPath
 )
 
 func (host *Host) pushFiles(job *Job,
