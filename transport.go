@@ -11,12 +11,13 @@ import (
 const (
 	sshControlPath    = "~/.ssh/judo-control-%C"
 	sshControlPathOpt = "-o ControlPath " + sshControlPath
+	sshBatchOpt       = "-o BatchMode=yes"
 )
 
 func (host *Host) pushFiles(job *Job,
 	fnameLocal string, fnameRemote string) (err error) {
 	var remote = fmt.Sprintf("[%s]:%s", host.Name, fnameRemote)
-	proc, err := NewProc("scp", sshControlPathOpt, "-r", fnameLocal, remote)
+	proc, err := NewProc("scp", sshBatchOpt, sshControlPathOpt, "-r", fnameLocal, remote)
 	if err != nil {
 		return
 	}
@@ -72,6 +73,7 @@ func shargs(ss []string) string {
 
 func (host *Host) startSSH(job *Job, command string) (proc *Proc, err error) {
 	sshArgs := []string{
+		sshBatchOpt,
 		sshControlPathOpt,
 		host.Name,
 	}
@@ -154,7 +156,7 @@ func (host *Host) StartMaster() (err error) {
 	if host.master != nil {
 		panic("there already is a master")
 	}
-	proc, err := NewProc("ssh", sshControlPathOpt, "-MN", host.Name)
+	proc, err := NewProc("ssh", sshBatchOpt, sshControlPathOpt, "-MN", host.Name)
 	if err != nil {
 		return
 	}
