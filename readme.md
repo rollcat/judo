@@ -498,15 +498,16 @@ and 1.11, all the way to 1.61, if necessary. Same for 2.x; expect 2.71
 before 3.0.
 
 Testing for the required version number is made simple via an optional
-argument to the `-v` flag. In the 0.x series, it must be an exact
-version string match; past 1.0, it will specify the minimal required
-version. This feature was added in version 0.4, so as of today, only
-this will work:
+argument to the `-v` flag. This will verify that you're using Judo
+version 0.5, or compatible:
 
-    judo -v 0.4
+    judo -v 0.5 || { echo 'You need to update!'; exit 111; }
+
+This feature was added in version 0.4, so if you're using an earlier
+version, please update.
 
 ## Author
 
-&copy; 2016-2018 Kamil Cholewiński <<kamil@rollc.at>>
+&copy; 2016-2022 Kamil Cholewiński <<kamil@rollc.at>>
 
 License is [MIT](/license.txt).

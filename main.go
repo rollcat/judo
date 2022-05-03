@@ -18,7 +18,7 @@ const usage = `usage:
 common flags:
     [-d] [-e KEY | KEY=VALUE] [-f n] [-t s]`
 
-const version = "0.4"
+const version = "0.5"
 
 func parseArgs(args []string) (
 	job *Job, names []string, msg string,
