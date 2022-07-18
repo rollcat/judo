@@ -91,7 +91,7 @@ The list of hard dependencies is intentionally kept minimal.
 The real thing:
 
 1. Get [Go][golang]
-2. `go get github.com/rollcat/judo`
+2. `go install github.com/rollcat/judo@latest`
 
 For development:
 
