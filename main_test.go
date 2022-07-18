@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -102,5 +103,34 @@ func TestMainParseScriptDirMode(t *testing.T) {
 	}
 	if !job.Script.IsDirMode() {
 		t.Error("expected dirmode")
+	}
+}
+
+func TestMainParseNames(t *testing.T) {
+	expectedNames := []string{"foo", "bar"}
+	_, gotNames, _, _, err := parseArgs([]string{"-c", "true", "foo", "bar"})
+	if err != nil {
+		t.Error("err not nil")
+	}
+	if len(expectedNames) != len(gotNames) {
+		t.Error("len(gotNames)")
+	}
+	for i, expectedName := range expectedNames {
+		if expectedName != gotNames[i] {
+			t.Error("expectedName")
+		}
+	}
+}
+
+func TestMainParseBadNames(t *testing.T) {
+	_, gotNames, msg, status, _ := parseArgs([]string{"-c", "true", "user@foo", "bar"})
+	if status == 0 {
+		t.Error("status")
+	}
+	if len(gotNames) != 0 {
+		t.Error("len(gotNames)")
+	}
+	if !strings.HasPrefix(msg, "error:") || !strings.HasSuffix(msg, "user@foo") {
+		t.Error("msg")
 	}
 }

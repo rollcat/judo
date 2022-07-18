@@ -78,6 +78,13 @@ func parseArgs(args []string) (
 		return nil, nil, errUsage, 111, nil
 	}
 
+	for _, name := range names {
+		if strings.Contains(name, "@") {
+			errMsg := fmt.Sprintf("error: malformed hostname: %s", name)
+			return nil, nil, errMsg, 1, nil
+		}
+	}
+
 	inventory := NewInventory()
 	inventory.Timeout = timeout
 	job = NewJob(inventory, script, command, env, timeout)
