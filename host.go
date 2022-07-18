@@ -11,6 +11,7 @@ import (
 type Host struct {
 	Name    string
 	Env     map[string]string
+	SshArgs []string
 	groups  []string
 	workdir string
 	cancel  chan bool
@@ -23,12 +24,13 @@ func NewHost(name string) (host *Host) {
 	env := make(map[string]string)
 	env["HOSTNAME"] = name
 	return &Host{
-		Name:   name,
-		Env:    env,
-		groups: []string{},
-		cancel: make(chan bool),
-		master: nil,
-		logger: log.New(os.Stderr, fmt.Sprintf("%s: ", name), 0),
+		Name:    name,
+		Env:     env,
+		SshArgs: []string{},
+		groups:  []string{},
+		cancel:  make(chan bool),
+		master:  nil,
+		logger:  log.New(os.Stderr, fmt.Sprintf("%s: ", name), 0),
 	}
 }
 

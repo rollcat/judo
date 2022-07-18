@@ -111,6 +111,10 @@ Judo will honor the standard `/etc/ssh/config` and `~/.ssh/config` to
 establish & control the SSH connection. This is where you should keep
 all of your dirty hacks like `ProxyCommand` or `Control*`.
 
+If you need to override your SSH client configuration for a specific
+run, you can use the `-F` option (just like you would with
+[`ssh(1)`][man-ssh]) to specify a custom file.
+
 ### Groups: using with multiple remote hosts
 
 So far, Judo might seem no more useful than this little tapeworm:

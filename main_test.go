@@ -134,3 +134,23 @@ func TestMainParseBadNames(t *testing.T) {
 		t.Error("msg")
 	}
 }
+
+func TestMainParseExtraConfig(t *testing.T) {
+	job, _, _, _, err := parseArgs([]string{"-F", "./ssh_config", "-c", "true"})
+	if err != nil {
+		t.Error("err not nil")
+	}
+	if len(job.SshArgs) != 2 ||
+		job.SshArgs[0] != "-F" ||
+		job.SshArgs[1] != "./ssh_config" {
+		t.Error("job.SshArgs")
+	}
+
+	job, _, _, _, err = parseArgs([]string{"-c", "true"})
+	if err != nil {
+		t.Error("err not nil")
+	}
+	if len(job.SshArgs) != 0 {
+		t.Error("job.SshArgs")
+	}
+}

@@ -29,6 +29,7 @@ type Job struct {
 	*Command
 	Timeout time.Duration
 	AddEnv  map[string]string
+	SshArgs []string
 	signals chan os.Signal
 }
 
@@ -82,7 +83,8 @@ func (script *Script) IsDirMode() bool {
 // NewJob creates a new Job object.
 func NewJob(
 	inventory *Inventory, script *Script, command *Command,
-	env map[string]string, timeout time.Duration) (job *Job) {
+	env map[string]string, sshArgs []string,
+	timeout time.Duration) (job *Job) {
 	// https://golang.org/pkg/os/signal/#Notify
 	signals := make(chan os.Signal, 1)
 	return &Job{
@@ -91,6 +93,7 @@ func NewJob(
 		Script:    script,
 		Timeout:   timeout,
 		AddEnv:    env,
+		SshArgs:   sshArgs,
 		signals:   signals,
 	}
 }
@@ -109,12 +112,12 @@ func (job Job) InstallSignalHandlers() {
 	}()
 }
 
-// PopulateInventory populates the inventory according to rules
-// explained therein; and associate environment overrides with the
-// hosts.
+// PopulateInventory with given names; resolve additional arguments
+// and environment overrides.
 func (job Job) PopulateInventory(names []string) {
 	job.Inventory.Populate(names)
 	for host := range job.GetHosts() {
+		host.SshArgs = job.SshArgs
 		for key, value := range job.AddEnv {
 			if _, has := host.Env[key]; has {
 				panic(fmt.Sprintf("Tried to override: %s", key))

@@ -19,14 +19,20 @@ const (
 func (host *Host) pushFiles(job *Job,
 	fnameLocal string, fnameRemote string) (err error) {
 	var remote = fmt.Sprintf("[%s]:%s", host.Name, fnameRemote)
-	proc, err := NewProc(
-		"scp",
+	scpArgs := []string{}
+	scpArgs = append(scpArgs, host.SshArgs...)
+	scpArgs = append(
+		scpArgs,
 		sshBatchOpt,
 		sshControlPathOpt,
 		sshControlMasterOpt,
 		"-r",
 		fnameLocal,
 		remote,
+	)
+	proc, err := NewProc(
+		"scp",
+		scpArgs...,
 	)
 	if err != nil {
 		return
@@ -82,22 +88,25 @@ func shargs(ss []string) string {
 }
 
 func (host *Host) startSSH(job *Job, command string) (proc *Proc, err error) {
-	sshArgs := []string{
+	sshArgs := []string{}
+	sshArgs = append(sshArgs, host.SshArgs...)
+	sshArgs = append(
+		sshArgs,
 		sshBatchOpt,
 		sshControlPathOpt,
 		sshControlMasterOpt,
 		host.Name,
-	}
+	)
 	if host.workdir != "" {
 		sshArgs = append(sshArgs, []string{
 			"cd", host.workdir, "&&",
 		}...)
 	}
-	sshArgs = append(sshArgs, []string{"env"}...)
+	sshArgs = append(sshArgs, "env")
 	for key, value := range host.Env {
 		sshArgs = append(sshArgs, fmt.Sprintf("%s=%s", key, value))
 	}
-	sshArgs = append(sshArgs, []string{"sh", "-c", shquote(command)}...)
+	sshArgs = append(sshArgs, "sh", "-c", shquote(command))
 	return NewProc("ssh", sshArgs...)
 }
 

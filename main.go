@@ -15,7 +15,7 @@ const longHelp = `usage:
     judo [common flags] -c COMMAND [--] ssh-targets
     judo -v [REQUIRED-VERSION]
     judo -h
-common flags:  [-t TIMEOUT] [-e KEY | KEY=VALUE] [-d]
+common flags:  [-t TIMEOUT] [-e KEY | KEY=VALUE] [-F SSH_CONFIG] [-d]
 flags:
     -s  Execute specified SCRIPT (file) on remote targets
     -c  Execute specified shell COMMAND on remote targets
@@ -25,6 +25,7 @@ flags:
     -t  Wait TIMEOUT seconds before giving up
     -e  Set KEY to VALUE in the remote environment
         (default: take the value from the local environment)
+    -F  Instruct ssh(1)/scp(1) to use custom SSH_CONFIG file
     -d  More verbose debugging logs`
 
 const version = "0.5"
@@ -33,7 +34,7 @@ func parseArgs(args []string) (
 	job *Job, names []string, msg string,
 	status int, err error) {
 
-	names, opts, err := getopt.GetOpt(args, "s:c:vht:e:d", nil)
+	names, opts, err := getopt.GetOpt(args, "s:c:vht:e:F:d", nil)
 	if err != nil {
 		return nil, nil, errUsage, 111, err
 	}
@@ -41,6 +42,7 @@ func parseArgs(args []string) (
 	var script *Script
 	var command *Command
 	var timeout = time.Duration(30) * time.Second
+	sshArgs := []string{}
 	env := make(map[string]string)
 
 	for _, opt := range opts {
@@ -69,8 +71,12 @@ func parseArgs(args []string) (
 			if err != nil {
 				return nil, nil, errUsage, 111, err
 			}
+		case "-F":
+			sshArgs = append(sshArgs, "-F", opt.Arg())
 		case "-d":
 			moreDebugLogging()
+		default:
+			panic("unexpected argument")
 		}
 	}
 
@@ -87,7 +93,7 @@ func parseArgs(args []string) (
 
 	inventory := NewInventory()
 	inventory.Timeout = timeout
-	job = NewJob(inventory, script, command, env, timeout)
+	job = NewJob(inventory, script, command, env, sshArgs, timeout)
 
 	return job, names, "", 0, nil
 }
