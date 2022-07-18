@@ -28,7 +28,7 @@ flags:
     -F  Instruct ssh(1)/scp(1) to use custom SSH_CONFIG file
     -d  More verbose debugging logs`
 
-const version = "0.5"
+const version = "0.6"
 
 func parseArgs(args []string) (
 	job *Job, names []string, msg string,
