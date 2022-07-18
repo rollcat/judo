@@ -9,7 +9,7 @@ func TestMainParseHelp(t *testing.T) {
 	if err != nil {
 		t.Error("err not nil")
 	}
-	if msg != usage {
+	if msg != errUsage {
 		t.Error("no usage message")
 	}
 	if status == 0 {
@@ -20,8 +20,8 @@ func TestMainParseHelp(t *testing.T) {
 	if err != nil {
 		t.Error("err not nil")
 	}
-	if msg != usage {
-		t.Error("no usage message")
+	if msg != longHelp {
+		t.Error("no help message")
 	}
 	if status != 0 {
 		t.Error("unexpected error status")

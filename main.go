@@ -3,20 +3,29 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
 	getopt "github.com/timtadh/getopt"
 )
 
-const usage = `usage:
-    judo [common flags] -s script  [--] ssh-targets
-    judo [common flags] -c command [--] ssh-targets
-    judo -v [required-version]
+const errUsage = `judo: use "judo -h" to get help"`
+const longHelp = `usage:
+    judo [common flags] -s SCRIPT  [--] ssh-targets
+    judo [common flags] -c COMMAND [--] ssh-targets
+    judo -v [REQUIRED-VERSION]
     judo -h
-common flags:
-    [-d] [-e KEY | KEY=VALUE] [-f n] [-t s]`
+common flags:  [-t TIMEOUT] [-e KEY | KEY=VALUE] [-d]
+flags:
+    -s  Execute specified SCRIPT (file) on remote targets
+    -c  Execute specified shell COMMAND on remote targets
+    -v  Display the software version; check that this binary
+        is backward compatible with REQUIRED-VERSION
+    -h  Display this help text
+    -t  Wait TIMEOUT seconds before giving up
+    -e  Set KEY to VALUE in the remote environment
+        (default: take the value from the local environment)
+    -d  More verbose debugging logs`
 
 const version = "0.5"
 
@@ -24,9 +33,9 @@ func parseArgs(args []string) (
 	job *Job, names []string, msg string,
 	status int, err error) {
 
-	names, opts, err := getopt.GetOpt(args, "hvs:c:t:e:d", nil)
+	names, opts, err := getopt.GetOpt(args, "s:c:vht:e:d", nil)
 	if err != nil {
-		return nil, nil, usage, 111, err
+		return nil, nil, errUsage, 111, err
 	}
 
 	var script *Script
@@ -36,34 +45,29 @@ func parseArgs(args []string) (
 
 	for _, opt := range opts {
 		switch opt.Opt() {
-		case "-h":
-			return nil, nil, usage, 0, nil
+		case "-s":
+			script, err = NewScript(opt.Arg())
+			if err != nil {
+				return nil, nil, errUsage, 111, nil
+			}
+		case "-c":
+			command = NewCommand(opt.Arg())
 		case "-v":
 			if len(names) > 0 && version != names[0] {
 				return nil, nil, version, 1, nil
 			}
 			return nil, nil, version, 0, nil
-		case "-s":
-			script, err = NewScript(opt.Arg())
-			if err != nil {
-				return nil, nil, usage, 111, nil
-			}
-		case "-c":
-			command = NewCommand(opt.Arg())
+		case "-h":
+			return nil, nil, longHelp, 0, nil
 		case "-t":
 			timeout, err = time.ParseDuration(opt.Arg())
 			if err != nil {
-				return nil, nil, usage, 111, err
-			}
-		case "-f":
-			_, err = strconv.ParseUint(opt.Arg(), 10, 8)
-			if err != nil {
-				return nil, nil, usage, 111, err
+				return nil, nil, errUsage, 111, err
 			}
 		case "-e":
 			err = parseEnvArg(opt.Arg(), env)
 			if err != nil {
-				return nil, nil, usage, 111, err
+				return nil, nil, errUsage, 111, err
 			}
 		case "-d":
 			moreDebugLogging()
@@ -71,7 +75,7 @@ func parseArgs(args []string) (
 	}
 
 	if script == nil && command == nil {
-		return nil, nil, usage, 111, nil
+		return nil, nil, errUsage, 111, nil
 	}
 
 	inventory := NewInventory()
