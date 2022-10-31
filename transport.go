@@ -180,7 +180,10 @@ func (host *Host) StartMaster() (err error) {
 	if host.master != nil {
 		panic("there already is a master")
 	}
-	proc, err := NewProc("ssh", sshBatchOpt, sshControlPathOpt, "-MN", host.Name)
+        sshArgs := []string{}
+        sshArgs = append(sshArgs, host.SshArgs...)
+        sshArgs = append(sshArgs, sshBatchOpt, sshControlPathOpt, "-MN", host.Name)
+        proc, err := NewProc("ssh", sshArgs...)
 	if err != nil {
 		return
 	}
