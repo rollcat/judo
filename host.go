@@ -46,8 +46,8 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 	defer host.StopMaster()
 
 	// make cozy
-	err = host.SSH(job, "mkdir -p $HOME/.judo")
-	workdir, err := host.SSHRead(job, "TMPDIR=$HOME/.judo mktemp -d")
+	err = host.SSH(job, `mkdir -p "$HOME/.judo"`)
+	workdir, err := host.SSHRead(job, `TMPDIR="$HOME/.judo" mktemp -d`)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 
 	cleanup := func() error {
 		host.workdir = ""
-		return host.SSH(job, fmt.Sprintf("rm -r %s", workdir))
+		return host.SSH(job, fmt.Sprintf("rm -r %s", shquote(workdir)))
 	}
 
 	// ensure cleanup
@@ -85,7 +85,7 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 	// Create remote directory structure
 	if err = host.SSH(
 		job,
-		fmt.Sprintf("mkdir -p %s", remoteScriptDir),
+		fmt.Sprintf("mkdir -p %s", shquote(remoteScriptDir)),
 	); err != nil {
 		return err
 	}
