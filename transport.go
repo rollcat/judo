@@ -104,7 +104,7 @@ func (host *Host) startSSH(job *Job, command string) (proc *Proc, err error) {
 	}
 	sshArgs = append(sshArgs, "env")
 	for key, value := range host.Env {
-		sshArgs = append(sshArgs, fmt.Sprintf("%s=%s", key, value))
+		sshArgs = append(sshArgs, fmt.Sprintf("%s=%s", key, shquote(value)))
 	}
 	sshArgs = append(sshArgs, "sh", "-c", shquote(command))
 	return NewProc("ssh", sshArgs...)
