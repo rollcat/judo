@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -34,10 +35,24 @@ func NewHost(name string) (host *Host) {
 	}
 }
 
-// SendRemoteAndRun establishes a connection to the host, sends off
-// and executes the given job, and returns any possible resulting
-// error.
-func (host *Host) SendRemoteAndRun(job *Job) (err error) {
+// Run the script. The Filename must exist and be either a regular,
+// executable file, or a "dirmode" style directory (with an executable
+// file named "script" inside).
+func (s *Script) Run(ctx context.Context, cfg *Config, host *Host) (err error) {
+	dirmode := false
+	stat, err := os.Stat(s.Filename)
+	if err != nil {
+		return err
+	}
+	// figure out if we should run in dirmode
+	if stat.IsDir() {
+		_, err = os.Stat(path.Join(s.Filename, "script"))
+		if err != nil {
+			return err
+		}
+		dirmode = true
+	}
+
 	// speedify!
 	host.StartMaster()
 
@@ -46,8 +61,8 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 	defer host.StopMaster()
 
 	// make cozy
-	err = host.SSH(job, `mkdir -p "$HOME/.judo"`)
-	workdir, err := host.SSHRead(job, `TMPDIR="$HOME/.judo" mktemp -d`)
+	err = host.SSH(cfg, `mkdir -p "$HOME/.judo"`)
+	workdir, err := host.SSHRead(cfg, `TMPDIR="$HOME/.judo" mktemp -d`)
 	if err != nil {
 		return err
 	}
@@ -55,7 +70,7 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 
 	cleanup := func() error {
 		host.workdir = ""
-		return host.SSH(job, fmt.Sprintf("rm -r %s", shquote(workdir)))
+		return host.SSH(cfg, fmt.Sprintf("rm -r %s", shquote(workdir)))
 	}
 
 	// ensure cleanup
@@ -70,31 +85,31 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 
 	// Figure out the correct path for the remote script
 	var remoteScriptDir string
-	if job.Script.dirmode {
+	if dirmode {
 		remoteScriptDir = path.Join(
 			workdir,
-			job.Script.fname,
+			s.Filename,
 		)
 	} else {
 		remoteScriptDir = path.Join(
 			workdir,
-			path.Dir(job.Script.fname),
+			path.Dir(s.Filename),
 		)
 	}
 
 	// Create remote directory structure
 	if err = host.SSH(
-		job,
+		cfg,
 		fmt.Sprintf("mkdir -p %s", shquote(remoteScriptDir)),
 	); err != nil {
 		return err
 	}
 
 	// push files to remote
-	if job.Script.dirmode {
+	if dirmode {
 		if err = host.pushFiles(
-			job,
-			job.Script.fname,
+			cfg,
+			s.Filename,
 			// We need to strip one level of path, otherwise
 			// scp will duplicate it. Eh...
 			path.Dir(remoteScriptDir),
@@ -103,8 +118,8 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 		}
 	} else {
 		if err = host.pushFiles(
-			job,
-			job.Script.fname,
+			cfg,
+			s.Filename,
 			remoteScriptDir,
 		); err != nil {
 			return err
@@ -113,29 +128,23 @@ func (host *Host) SendRemoteAndRun(job *Job) (err error) {
 
 	// Figure out what is the remote command
 	var remoteCommand string
-	if job.Script.dirmode {
+	if dirmode {
 		remoteCommand = path.Join(remoteScriptDir, "script")
 	} else {
 		remoteCommand = path.Join(
 			remoteScriptDir,
-			path.Base(job.Script.fname),
+			path.Base(s.Filename),
 		)
 	}
 
 	// do the actual work
-	errJob := host.SSH(job, remoteCommand)
+	err = host.SSH(cfg, remoteCommand)
 
 	// clean up
-	if err = cleanup(); err != nil {
-		return err
+	if errCleanup := cleanup(); errCleanup != nil {
+		return errCleanup
 	}
-	return errJob
-}
-
-// RunRemote runs the given job on the host, assuming the connection
-// has been already established, and job files copied over.
-func (host *Host) RunRemote(job *Job) (err error) {
-	return host.SSH(job, job.Command.cmd)
+	return err
 }
 
 // Cancel execution of code on the remote end.

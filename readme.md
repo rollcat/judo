@@ -172,7 +172,7 @@ space.
 
 Sometimes you don't know the list of hosts ahead of time, or prefer to
 keep it in another format or source. When Judo sees the `+x` flag on a
-group file, it will execute it before starting the job; the output
+group file, it will execute it before starting any work; the output
 (one line per host, like above) will indicate group membership.
 
 You can use this to pull the list of hosts from some API, for example
@@ -188,9 +188,9 @@ corresponding regions on EC2 to pull the host lists. The file
 `ec2-all` is a simple text file, with two lines, naming each of the
 above scripts.
 
-Group scripts are not executed, unless the group name is included in
-the job. So running `judo -s foo.sh fred` will not trigger any EC2 API
-calls.
+Group scripts are not executed, unless the group name is included on the
+command line. In our example, running `judo -s foo.sh fred` will not
+trigger any EC2 API calls.
 
 ## Scripting
 
@@ -411,7 +411,7 @@ groups/                   - inventory
     home                  - lists your workstation, router, NAS...
 scripts/                  - collection of scripts to run on remotes
     bootstrap/            - get a new machine ready for action
-        script*           - main entry point of the bootstrap job
+        script*           - main entry point of the bootstrap script
         vars_CentOS       - OS-dependent vars,
         vars_Debian       - can be included with something like:
         vars_FreeBSD      - . scripts/bootstrap/vars_$(uname)

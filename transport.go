@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"strings"
 	"time"
 )
 
@@ -16,9 +15,12 @@ const (
 	sshControlMasterOpt = "-o ControlMaster=no"
 )
 
-func (host *Host) pushFiles(job *Job,
-	fnameLocal string, fnameRemote string) (err error) {
-	var remote = fmt.Sprintf("[%s]:%s", host.Name, fnameRemote)
+func (host *Host) pushFiles(
+	cfg *Config,
+	fnameLocal string,
+	fnameRemote string,
+) (err error) {
+	remote := fmt.Sprintf("[%s]:%s", host.Name, fnameRemote)
 	scpArgs := []string{}
 	scpArgs = append(scpArgs, host.SshArgs...)
 	scpArgs = append(
@@ -52,7 +54,7 @@ func (host *Host) pushFiles(job *Job,
 			host.logger.Println(line)
 		case err = <-proc.Done():
 			return err
-		case <-time.After(job.Timeout):
+		case <-time.After(cfg.Timeout):
 			return ErrorTimeout
 		case <-host.cancel:
 			if proc.IsAlive() {
@@ -77,17 +79,7 @@ func shquote(s string) string {
 	return b.String()
 }
 
-// Serialize an array of strings into a string that, when passed to a
-// shell, will again be interpreted as the same array of strings.
-func shargs(ss []string) string {
-	var qs []string
-	for _, s := range ss {
-		qs = append(qs, shquote(s))
-	}
-	return strings.Join(ss, " ")
-}
-
-func (host *Host) startSSH(job *Job, command string) (proc *Proc, err error) {
+func (host *Host) startSSH(cfg *Config, command string) (proc *Proc, err error) {
 	sshArgs := []string{}
 	sshArgs = append(sshArgs, host.SshArgs...)
 	sshArgs = append(
@@ -112,8 +104,11 @@ func (host *Host) startSSH(job *Job, command string) (proc *Proc, err error) {
 
 // SSH executes the given shell command on the remote host, and
 // reports exist status.
-func (host *Host) SSH(job *Job, command string) (err error) {
-	proc, err := host.startSSH(job, command)
+func (host *Host) SSH(cfg *Config, command string) (err error) {
+	proc, err := host.startSSH(cfg, command)
+	if err != nil {
+		return err
+	}
 	close(proc.Stdin())
 	for {
 		select {
@@ -129,7 +124,7 @@ func (host *Host) SSH(job *Job, command string) (err error) {
 			host.logger.Println(line)
 		case err = <-proc.Done():
 			return err
-		case <-time.After(job.Timeout):
+		case <-time.After(cfg.Timeout):
 			return ErrorTimeout
 		case <-host.cancel:
 			if proc.IsAlive() {
@@ -142,8 +137,11 @@ func (host *Host) SSH(job *Job, command string) (err error) {
 
 // SSHRead executes the given shell command on the remote host, and
 // returns its output together with exit status.
-func (host *Host) SSHRead(job *Job, command string) (out string, err error) {
-	proc, err := host.startSSH(job, command)
+func (host *Host) SSHRead(cfg *Config, command string) (out string, err error) {
+	proc, err := host.startSSH(cfg, command)
+	if err != nil {
+		return "", err
+	}
 	close(proc.Stdin())
 	for {
 		select {
@@ -159,7 +157,7 @@ func (host *Host) SSHRead(job *Job, command string) (out string, err error) {
 			host.logger.Println(line)
 		case err = <-proc.Done():
 			return
-		case <-time.After(job.Timeout):
+		case <-time.After(cfg.Timeout):
 			return "", ErrorTimeout
 		case <-host.cancel:
 			if proc.IsAlive() {
@@ -180,10 +178,10 @@ func (host *Host) StartMaster() (err error) {
 	if host.master != nil {
 		panic("there already is a master")
 	}
-        sshArgs := []string{}
-        sshArgs = append(sshArgs, host.SshArgs...)
-        sshArgs = append(sshArgs, sshBatchOpt, sshControlPathOpt, "-MN", host.Name)
-        proc, err := NewProc("ssh", sshArgs...)
+	sshArgs := []string{}
+	sshArgs = append(sshArgs, host.SshArgs...)
+	sshArgs = append(sshArgs, sshBatchOpt, sshControlPathOpt, "-MN", host.Name)
+	proc, err := NewProc("ssh", sshArgs...)
 	if err != nil {
 		return
 	}
