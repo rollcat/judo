@@ -9,8 +9,9 @@ import (
 	getopt "github.com/timtadh/getopt"
 )
 
-const errUsage = `judo: use "judo -h" to get help"`
-const longHelp = `usage:
+const (
+	errUsage = `judo: use "judo -h" to get help"`
+	longHelp = `usage:
     judo [common flags] -s SCRIPT  [--] ssh-targets
     judo [common flags] -c COMMAND [--] ssh-targets
     judo -v [REQUIRED-VERSION]
@@ -25,23 +26,25 @@ flags:
     -t  Wait TIMEOUT seconds before giving up
     -e  Set KEY to VALUE in the remote environment
         (default: take the value from the local environment)
+    -V  Instruct ssh(1)/scp(1) to be verbose (ssh -v)
     -F  Instruct ssh(1)/scp(1) to use custom SSH_CONFIG file
     -d  More verbose debugging logs`
+)
 
 const version = "0.6"
 
 func parseArgs(args []string) (
 	job *Job, names []string, msg string,
-	status int, err error) {
-
-	names, opts, err := getopt.GetOpt(args, "s:c:vht:e:F:d", nil)
+	status int, err error,
+) {
+	names, opts, err := getopt.GetOpt(args, "s:c:vht:e:VF:d", nil)
 	if err != nil {
 		return nil, nil, errUsage, 111, err
 	}
 
 	var script *Script
 	var command *Command
-	var timeout = time.Duration(30) * time.Second
+	timeout := time.Duration(30) * time.Second
 	sshArgs := []string{}
 	env := make(map[string]string)
 
@@ -59,6 +62,8 @@ func parseArgs(args []string) (
 				return nil, nil, version, 1, nil
 			}
 			return nil, nil, version, 0, nil
+		case "-V":
+			sshArgs = append(sshArgs, "-v")
 		case "-h":
 			return nil, nil, longHelp, 0, nil
 		case "-t":
