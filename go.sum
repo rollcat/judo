@@ -1,2 +1,2 @@
-github.com/timtadh/getopt v1.0.1 h1:POqWzvDtIIS6hXeF6koCEAYrbMIHxIAEmdKj4I+9Wl4=
-github.com/timtadh/getopt v1.0.1/go.mod h1:zL3bDzT0jByXSyWMOrBSBDcVE2AokRxHxgl5HKr/i/Q=
+github.com/rollcat/getopt v0.0.0-20230716181956-07db84dc9826 h1:jf2NAKfci3M48sFn8N+DKYCEMBZvZDwf9xG9Pmie948=
+github.com/rollcat/getopt v0.0.0-20230716181956-07db84dc9826/go.mod h1:XUhIufqB3iNF3vF5Y9MX5u1YBm5gdFcl7PxM3RilKAg=

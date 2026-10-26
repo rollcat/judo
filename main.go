@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	getopt "github.com/timtadh/getopt"
+	getopt "github.com/rollcat/getopt"
 )
 
 const (
