@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -34,29 +35,35 @@ flags:
 const version = "0.6"
 
 func parseArgs(args []string) (
-	job *Job, names []string, msg string,
-	status int, err error,
+	cfg *Config,
+	names []string,
+	msg string,
+	status int,
+	err error,
 ) {
-	names, opts, err := getopt.GetOpt(args, "s:c:vht:e:VF:d", nil)
+	names, opts, err := getopt.GetOpt(args, "s:c:vht:e:F:d", nil)
 	if err != nil {
 		return nil, nil, errUsage, 111, err
 	}
 
-	var script *Script
-	var command *Command
+	steps := []Step{}
 	timeout := time.Duration(30) * time.Second
 	sshArgs := []string{}
-	env := make(map[string]string)
 
 	for _, opt := range opts {
 		switch opt.Opt() {
-		case "-s":
-			script, err = NewScript(opt.Arg())
+		case "-e":
+			env, err := parseEnvArg(opt.Arg())
 			if err != nil {
-				return nil, nil, errUsage, 111, nil
+				return nil, nil, errUsage, 111, err
 			}
+			steps = append(steps, env)
+		case "-s":
+			script := &Script{Filename: opt.Arg()}
+			steps = append(steps, script)
 		case "-c":
-			command = NewCommand(opt.Arg())
+			command := &Command{opt.Arg()}
+			steps = append(steps, command)
 		case "-v":
 			if len(names) > 0 && version != names[0] {
 				return nil, nil, version, 1, nil
@@ -71,11 +78,6 @@ func parseArgs(args []string) (
 			if err != nil {
 				return nil, nil, errUsage, 111, err
 			}
-		case "-e":
-			err = parseEnvArg(opt.Arg(), env)
-			if err != nil {
-				return nil, nil, errUsage, 111, err
-			}
 		case "-F":
 			sshArgs = append(sshArgs, "-F", opt.Arg())
 		case "-d":
@@ -85,8 +87,9 @@ func parseArgs(args []string) (
 		}
 	}
 
-	if script == nil && command == nil {
-		return nil, nil, errUsage, 111, nil
+	if len(steps) == 0 {
+		// errMsg := "error: no steps specified"
+		return nil, nil, errUsage, 1, nil
 	}
 
 	for _, name := range names {
@@ -98,9 +101,9 @@ func parseArgs(args []string) (
 
 	inventory := NewInventory()
 	inventory.Timeout = timeout
-	job = NewJob(inventory, script, command, env, sshArgs, timeout)
+	cfg = NewConfig(inventory, steps, sshArgs)
 
-	return job, names, "", 0, nil
+	return cfg, names, "", 0, nil
 }
 
 type argumentError struct {
@@ -111,32 +114,28 @@ func (e argumentError) Error() string {
 	return fmt.Sprintf("Bad argument: %s", e.Message)
 }
 
-func parseEnvArg(arg string, env map[string]string) error {
+func parseEnvArg(arg string) (*Env, error) {
 	elems := strings.SplitN(arg, "=", 2)
 	key := elems[0]
 	var value string
-	var has bool
 	switch len(elems) {
 	case 0:
 		panic("wtf")
 	case 1:
-		value, has = os.LookupEnv(key)
-		if !has {
-			return argumentError{
+		var ok bool
+		if value, ok = os.LookupEnv(key); !ok {
+			return nil, argumentError{
 				Message: fmt.Sprintf("%s not set", key),
 			}
 		}
 	case 2:
 		value = elems[1]
 	}
-	if _, has = env[key]; has {
-	}
-	env[key] = value
-	return nil
+	return &Env{Name: key, Value: value}, nil
 }
 
 func main() {
-	job, names, msg, status, err := parseArgs(os.Args[1:])
+	cfg, names, msg, status, err := parseArgs(os.Args[1:])
 	if err != nil {
 		fmt.Println(err)
 		status = 111
@@ -148,18 +147,19 @@ func main() {
 	if status != 0 {
 		os.Exit(status)
 	}
-	job.PopulateInventory(names)
-	job.InstallSignalHandlers()
+	cfg.PopulateInventory(names)
+	cfg.InstallSignalHandlers()
 
 	fmt.Printf("Running: %v\n", func() (names []string) {
 		// look mama, Go has list comprehensions
-		for host := range job.GetHosts() {
+		for host := range cfg.GetHosts() {
 			names = append(names, host.Name)
 		}
 		return
 	}())
-	result := job.Execute()
-	successful, failful := result.Report()
+	ctx := context.Background()
+	cfg.Run(ctx)
+	successful, failful := cfg.Report()
 	if len(failful) > 0 {
 		for host := range failful {
 			fmt.Printf("Failed: %s: %s\n", host, failful[host])
